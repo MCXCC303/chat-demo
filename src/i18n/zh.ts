@@ -31,6 +31,8 @@ export const zh = {
   copyFailed: '复制失败，请长按或选中文本后复制',
   send: '发送',
   editMessage: '编辑消息',
+  expandUserMessage: '展开消息',
+  collapseUserMessage: '收起消息',
   regenerate: '重新生成',
   continueGenerating: '继续生成',
   changeApiKey: '更换 API Key',

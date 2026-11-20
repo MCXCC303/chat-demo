@@ -2,13 +2,15 @@ import { useTranslate } from '../../i18n/index.js'
 import clsx from 'clsx'
 import { memo, useLayoutEffect, useRef, useState } from 'react'
 import { useIsMobile } from '../../app/viewport.js'
-import { IconEditOutline16 } from '../base/icons.js'
+import { IconChevronDownOutline14, IconEditOutline16 } from '../base/icons.js'
 import { getFileViewType, isImage } from '../../services/attachments.js'
 import { editMessage, retryUpload } from '../../services/chat/store.js'
 import { stopReadAloud } from '../../services/speech/readAloud.js'
 import type { UserMessage as UserMessageType } from '../../services/chat/types.js'
 import { Button } from '../base/Button.js'
+import { CollapsibleText } from '../base/CollapsibleText.js'
 import { IconButton } from '../base/IconButton.js'
+import { Tooltip } from '../base/Tooltip.js'
 import { ensureApiKey } from '../settings/settingsDialogState.js'
 import {
   BranchSwitcher,
@@ -18,6 +20,8 @@ import {
 import { MessageFile } from './MessageFile.js'
 import { CopyButton } from './CopyButton.js'
 import styles from './UserMessage.module.css'
+
+const USER_MESSAGE_COLLAPSED_HEIGHT = 192
 
 export const UserMessage = memo(function UserMessage({
   sessionId,
@@ -114,7 +118,32 @@ export const UserMessage = memo(function UserMessage({
         </div>
       ) : (
         <>
-          {message.content ? <div className={styles.bubble}>{message.content}</div> : null}
+          {message.content ? (
+            <div className={styles.bubble}>
+              <CollapsibleText
+                content={message.content}
+                collapsedHeight={USER_MESSAGE_COLLAPSED_HEIGHT}
+                renderToggle={({ collapsed, setCollapsed }) => (
+                  <div className={styles.toggleArea}>
+                    <div className={clsx(styles.fade, !collapsed && styles.fadeHidden)} />
+                    <Tooltip
+                      content={t(collapsed ? 'expandUserMessage' : 'collapseUserMessage')}
+                      placement="top"
+                    >
+                      <button
+                        type="button"
+                        className={clsx(styles.toggle, !collapsed && styles.toggleExpanded)}
+                        aria-label={t(collapsed ? 'expandUserMessage' : 'collapseUserMessage')}
+                        onClick={() => setCollapsed(!collapsed)}
+                      >
+                        <IconChevronDownOutline14 />
+                      </button>
+                    </Tooltip>
+                  </div>
+                )}
+              />
+            </div>
+          ) : null}
           <div className={styles.bottom}>
             <div className={clsx(styles.actions, isLast && styles.alwaysShow)}>
               {message.content ? <CopyButton text={message.content} /> : null}

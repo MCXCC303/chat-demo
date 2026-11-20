@@ -35,6 +35,8 @@ export const en = {
   copyFailed: 'Copy failed. Please long-press or select the text to copy.',
   send: 'Send',
   editMessage: 'Edit message',
+  expandUserMessage: 'Expand message',
+  collapseUserMessage: 'Collapse message',
   regenerate: 'Regenerate',
   continueGenerating: 'Continue',
   changeApiKey: 'Change API Key',

@@ -28,6 +28,7 @@
 }
 
 .bubble {
+  position: relative;
   max-width: calc(100% - 88px);
   box-sizing: border-box;
   padding: 10px 16px;
@@ -38,6 +39,63 @@
   background-color: var(--dsw-specific-bubble);
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.toggleArea {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 240px;
+  height: 72px;
+  pointer-events: none;
+}
+
+.fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-bottom-right-radius: 22px;
+  background-image: radial-gradient(
+    140px 64px at right 4px bottom 0,
+    var(--dsw-specific-bubble) 0%,
+    var(--dsw-specific-bubble) 38%,
+    color-mix(in srgb, var(--dsw-specific-bubble) 70%, transparent) 60%,
+    color-mix(in srgb, var(--dsw-specific-bubble) 0%, transparent) 80%
+  );
+  opacity: 1;
+  transition: opacity var(--ds-transition-duration) var(--ds-ease-in-out);
+}
+
+.fadeHidden {
+  opacity: 0;
+}
+
+.toggle {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 30px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--dsw-alias-border-inverted);
+  border-radius: 100px;
+  background: var(--dsw-alias-bg-layer-3);
+  color: var(--dsw-alias-label-tertiary);
+  pointer-events: all;
+  cursor: pointer;
+
+  svg {
+    transform: rotate(180deg);
+    transition: transform var(--ds-transition-duration) var(--ds-ease-in-out);
+  }
+}
+
+.toggleExpanded svg {
+  transform: rotate(0);
 }
 
 @media not all and (min-width: 440px) {

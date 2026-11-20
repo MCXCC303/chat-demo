@@ -44,6 +44,9 @@ export const App = () => {
   const sessionLoadError = useChatStore((state) =>
     state.activeId === null ? false : state.sessionLoadErrors[state.activeId] === true
   )
+  const sessionTitle = useChatStore((state) =>
+    state.activeId === null ? '' : (state.sessionCache[state.activeId]?.title ?? '')
+  )
   const frameRef = useMobileViewport(isMobile)
   const streaming = useChatStore((state) =>
     state.activeId === null ? false : Object.hasOwn(state.streaming, state.activeId)
@@ -55,6 +58,10 @@ export const App = () => {
   useEffect(() => {
     document.documentElement.lang = locale
   }, [locale])
+
+  useEffect(() => {
+    document.title = sessionTitle ? `${sessionTitle} - DeepSeek` : t('siteTitle')
+  }, [sessionTitle, t])
 
   // 文件数、存储空间达到上限时，附件上只显示「上传失败」，原因用 toast 说明
   useEffect(() => onUploadNotice(showToast), [])

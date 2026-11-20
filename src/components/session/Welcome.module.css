@@ -28,11 +28,25 @@
   color: var(--dsw-alias-label-primary);
 }
 
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 12px;
+  color: var(--dsw-alias-brand-primary);
+}
+
 @media (max-width: 439px) {
   .greeting {
     font-size: 20px;
     line-height: 28px;
     font-weight: 500;
+  }
+
+  .logo svg {
+    width: 29px;
+    height: 29px;
   }
 }
 

@@ -1,4 +1,5 @@
 import { useIsMobile } from '../../app/viewport.js'
+import { DeepSeekWhaleIcon } from '../base/BrandLogo.js'
 import { useTranslate } from '../../i18n/index.js'
 import { ChatInput } from '../chatInput/ChatInput.js'
 import { MobileHeader } from './MobileHeader.js'
@@ -12,7 +13,12 @@ export const Welcome = () => {
     <div className={styles.container}>
       {isMobile ? <MobileHeader /> : null}
       <div className={styles.welcome}>
-        <div className={styles.greeting}>{t('welcomeMessageChat250808')}</div>
+        <div className={styles.greeting}>
+          <div className={styles.logo}>
+            <DeepSeekWhaleIcon size={34} />
+          </div>
+          <span>{t('welcomeMessageChat250808')}</span>
+        </div>
         <ChatInput sessionId={null} />
         {isMobile ? <div className={styles.caveat}>{t('contentCaveat')}</div> : null}
       </div>

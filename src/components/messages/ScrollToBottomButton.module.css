@@ -1,0 +1,82 @@
+/* 浮在输入框右上方；定位基准是输入框容器（桌面端 sticky、移动端 relative） */
+.wrapper {
+  position: absolute;
+  bottom: 100%;
+  right: 12px;
+  margin-bottom: 20px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-button-floating-fill);
+  box-shadow: var(--dsw-shadow-lv3);
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: var(--dsw-alias-button-floating-hover);
+  }
+}
+
+/* 生成中的品牌蓝旋转光环，与官网一致 */
+.halo {
+  --halo-ring-width: 1.5px;
+  --halo-color: var(--dsw-alias-brand-primary);
+
+  &::before {
+    content: '';
+    z-index: 1;
+    pointer-events: none;
+    box-sizing: border-box;
+    padding: var(--halo-ring-width);
+    background:
+      radial-gradient(circle 0.75px at 50% 0.75px, var(--halo-color) 0.65px, transparent 0.75px),
+      conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        color-mix(in srgb, var(--halo-color) 10%, transparent) 54deg,
+        color-mix(in srgb, var(--halo-color) 75%, transparent) 216deg,
+        var(--halo-color) 360deg
+      );
+    mask-image: linear-gradient(#fff 0, #fff 0), linear-gradient(#fff 0, #fff 0);
+    mask-position:
+      0 0,
+      0 0;
+    mask-size: auto, auto;
+    mask-repeat: repeat, repeat;
+    mask-clip: content-box, border-box;
+    mask-origin: content-box, border-box;
+    mask-composite: exclude;
+    opacity: 1;
+    border-radius: 50%;
+    transition: opacity 0.3s;
+    animation: halo-rotate 2s linear infinite;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+}
+
+.fading {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+@keyframes halo-rotate {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

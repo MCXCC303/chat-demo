@@ -9,7 +9,8 @@ import { selectMessageVersion } from '../../services/chat/store.js'
 import type { Session } from '../../services/chat/types.js'
 import { closeSearchPanel } from '../search/searchPanelState.js'
 import { AssistantMessage } from './AssistantMessage.js'
-import { ScrollToBottomContext } from './scrollContext.js'
+import { clampScrollTop } from './autoScrollClamp.js'
+import { ScrollToBottomContext, ScrollToLatestContext } from './scrollContext.js'
 import { UserMessage } from './UserMessage.js'
 import type { Message } from '../../services/chat/types.js'
 
@@ -31,7 +32,13 @@ import styles from './MessageList.module.css'
 
 /** 距底部小于该值时视为在底部，流式内容增长时跟随 */
 const STICKY_THRESHOLD = 40
+/** 距底部超过该距离时显示「回到底部」按钮，与官网一致 */
+const SCROLL_BOTTOM_THRESHOLD = 52
 const EMPTY_VERSIONS: MessageVersions = { ids: [], index: -1 }
+
+/** 离开底部时显示回到底部按钮；贴底时隐藏 */
+const isScrollBottomVisible = (el: HTMLElement) =>
+  el.scrollTop + el.clientHeight <= el.scrollHeight - SCROLL_BOTTOM_THRESHOLD
 
 export const MessageList = ({
   session,
@@ -48,6 +55,11 @@ export const MessageList = ({
   const stickyRef = useRef(true)
   const scrollTopRef = useRef(0)
   const restoreScrollRef = useRef<{ messageId: string; top: number } | null>(null)
+  /** 正在流式生成的助手消息；自动滚动钳制只作用于这条消息 */
+  const streamingIdRef = useRef<string | null>(null)
+  /** 已触发过冻结的消息；每条消息只冻结一次，回到底部后不再重复冻结 */
+  const stoppedRef = useRef<string | null>(null)
+  const [showScrollBottom, setShowScrollBottom] = useState(false)
   const messages = getVisibleMessages(session)
   const [previousVersions, setPreviousVersions] = useState(() =>
     buildMessageVersions(session, new Map())
@@ -59,13 +71,59 @@ export const MessageList = ({
   if (versions !== previousVersions) {
     setPreviousVersions(versions)
   }
-  const lastMessageId = messages.at(-1)?.id
+  const lastMessage = messages.at(-1)
+  const lastMessageId = lastMessage?.id
+  /** 正在流式生成的助手消息 id；没有正文时钳制不生效 */
+  const streamingMessageId = streaming && lastMessage?.role === 'assistant' ? lastMessage.id : null
+
+  // 钳制需要最新的流式消息 id，先于其它副作用更新
+  useLayoutEffect(() => {
+    streamingIdRef.current = streamingMessageId
+  }, [streamingMessageId])
+
   const scrollToBottom = useCallback(() => {
     const el = scrollRef.current
-    if (el && stickyRef.current) {
-      el.scrollTop = el.scrollHeight
+    if (!el) {
+      return
+    }
+    if (stickyRef.current) {
+      const messageId = streamingIdRef.current
+      const body = messageId
+        ? el.querySelector<HTMLElement>(
+            `[data-message-id="${CSS.escape(messageId)}"] .ds-assistant-message-main-content`
+          )
+        : null
+      const result = clampScrollTop({
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+        scrollTop: el.scrollTop,
+        bodyTopOffset: body
+          ? body.getBoundingClientRect().top - el.getBoundingClientRect().top
+          : null,
+        stopped: messageId !== null && stoppedRef.current === messageId,
+      })
+      if (result.shouldStop && messageId !== null) {
+        // 正文起始位置已到达展示区域顶端：停止跟随，本条消息不再重复冻结
+        stoppedRef.current = messageId
+        stickyRef.current = false
+      }
+      el.scrollTop = result.target
       scrollTopRef.current = el.scrollTop
     }
+    // 冻结后内容仍在增长，按钮可见性要照常更新
+    setShowScrollBottom(isScrollBottomVisible(el))
+  }, [])
+
+  /** 回到最新消息并恢复跟随 */
+  const scrollToLatest = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) {
+      return
+    }
+    stickyRef.current = true
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    scrollTopRef.current = el.scrollTop
+    setShowScrollBottom(false)
   }, [])
 
   // 内容、键盘和输入框高度变化时，继续遵循当前跟随状态。
@@ -126,14 +184,18 @@ export const MessageList = ({
       el.scrollTop = scrollTopRef.current
     }
     const onScroll = () => {
-      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < STICKY_THRESHOLD
+      const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+      const nearBottom = distanceToBottom < STICKY_THRESHOLD
+      // 已被钳制冻结时，只有真正回到底部才恢复跟随，与官网一致。
+      const frozen = stoppedRef.current !== null && stoppedRef.current === streamingIdRef.current
       // 仅在用户向上滚动时停止跟随底部，布局或内容增高时保持跟随状态。
-      if (nearBottom) {
+      if (nearBottom && (!frozen || distanceToBottom <= 1)) {
         stickyRef.current = true
       } else if (el.scrollTop < scrollTopRef.current) {
         stickyRef.current = false
       }
       scrollTopRef.current = el.scrollTop
+      setShowScrollBottom(isScrollBottomVisible(el))
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
@@ -143,39 +205,43 @@ export const MessageList = ({
   const uploadRetryId = getUploadRetryId(messages, streaming)
   return (
     <ScrollToBottomContext.Provider value={scrollToBottom}>
-      <div ref={isMobile ? undefined : scrollRef} className={styles.container}>
-        <div ref={isMobile ? scrollRef : undefined} className={styles.scroll}>
-          <div ref={contentRef} className={styles.column}>
-            {messages.map((message, index) =>
-              message.role === 'user' ? (
-                <UserMessage
-                  key={message.id}
-                  sessionId={session.id}
-                  message={message}
-                  retryUploadId={uploadRetryId}
-                  isFirst={index === 0}
-                  isLast={index === lastIndex || index === lastIndex - 1}
-                  busy={streaming}
-                  versions={versions.get(message.id) ?? EMPTY_VERSIONS}
-                  onSelectVersion={selectVersion}
-                />
-              ) : (
-                <AssistantMessage
-                  key={message.id}
-                  sessionId={session.id}
-                  message={message}
-                  isLast={index === lastIndex}
-                  streaming={streaming && index === lastIndex}
-                  busy={streaming}
-                  versions={versions.get(message.id) ?? EMPTY_VERSIONS}
-                  onSelectVersion={selectVersion}
-                />
-              )
-            )}
+      <ScrollToLatestContext.Provider
+        value={{ visible: showScrollBottom, streaming, scrollToLatest }}
+      >
+        <div ref={isMobile ? undefined : scrollRef} className={styles.container}>
+          <div ref={isMobile ? scrollRef : undefined} className={styles.scroll}>
+            <div ref={contentRef} className={styles.column}>
+              {messages.map((message, index) =>
+                message.role === 'user' ? (
+                  <UserMessage
+                    key={message.id}
+                    sessionId={session.id}
+                    message={message}
+                    retryUploadId={uploadRetryId}
+                    isFirst={index === 0}
+                    isLast={index === lastIndex || index === lastIndex - 1}
+                    busy={streaming}
+                    versions={versions.get(message.id) ?? EMPTY_VERSIONS}
+                    onSelectVersion={selectVersion}
+                  />
+                ) : (
+                  <AssistantMessage
+                    key={message.id}
+                    sessionId={session.id}
+                    message={message}
+                    isLast={index === lastIndex}
+                    streaming={streaming && index === lastIndex}
+                    busy={streaming}
+                    versions={versions.get(message.id) ?? EMPTY_VERSIONS}
+                    onSelectVersion={selectVersion}
+                  />
+                )
+              )}
+            </div>
           </div>
+          {footer}
         </div>
-        {footer}
-      </div>
+      </ScrollToLatestContext.Provider>
     </ScrollToBottomContext.Provider>
   )
 }

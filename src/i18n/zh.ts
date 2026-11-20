@@ -2,6 +2,7 @@ export const zh = {
   welcomeMessageChat250808: '今天有什么可以帮到你？',
   contentCaveat: '内容由 AI 生成，请仔细甄别',
   scrollToBottom: '回到底部',
+  scrollNav: '提问导航',
   expandSiderbarButton: '打开边栏',
   collapseSiderbarButton: '收起边栏',
   newChat: '开启新对话',

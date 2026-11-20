@@ -87,7 +87,11 @@
   margin: 0 -2px;
   padding: 0 2px;
   overflow-y: auto;
-  scrollbar-color: var(--scroll-color) transparent;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .section {

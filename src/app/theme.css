@@ -61,11 +61,15 @@ body {
   --dsw-static-neutral-bluish-75: rgb(241, 243, 245);
   --dsw-static-neutral-bluish-800: rgb(53, 54, 56);
   --dsw-static-neutral-bluish-850: rgb(44, 44, 46);
+  --dsw-static-neutral-bluish-875: rgb(35, 35, 36);
   --dsw-static-neutral-bluish-900: rgb(27, 27, 28);
   --dsw-static-neutral-bluish-950: rgb(21, 21, 23);
   --dsw-static-neutral-100: rgb(245, 245, 245);
+  --dsw-static-neutral-200: rgb(229, 229, 229);
   --dsw-static-neutral-300: rgb(212, 212, 212);
   --dsw-static-neutral-550: rgb(101, 103, 107);
+  --dsw-static-neutral-600: rgb(84, 85, 87);
+  --dsw-static-neutral-700: rgb(60, 60, 61);
   --dsw-static-red-400: rgb(242, 90, 90);
   --dsw-static-red-600: rgb(236, 19, 19);
 }
@@ -106,17 +110,22 @@ body[data-ds-dark-theme] {
   --dsw-static-neutral-bluish-75: rgb(241, 243, 245);
   --dsw-static-neutral-bluish-800: rgb(53, 54, 56);
   --dsw-static-neutral-bluish-850: rgb(44, 44, 46);
+  --dsw-static-neutral-bluish-875: rgb(35, 35, 36);
   --dsw-static-neutral-bluish-900: rgb(27, 27, 28);
   --dsw-static-neutral-bluish-950: rgb(21, 21, 23);
   --dsw-static-neutral-100: rgb(245, 245, 245);
+  --dsw-static-neutral-200: rgb(229, 229, 229);
   --dsw-static-neutral-300: rgb(212, 212, 212);
   --dsw-static-neutral-550: rgb(101, 103, 107);
+  --dsw-static-neutral-600: rgb(84, 85, 87);
+  --dsw-static-neutral-700: rgb(60, 60, 61);
   --dsw-static-red-400: rgb(242, 90, 90);
   --dsw-static-red-600: rgb(236, 19, 19);
 }
 
 body {
   --dsw-alias-bg-base: var(--dsw-static-neutral-bluish-00);
+  --dsw-alias-bg-layer-1: var(--dsw-static-neutral-bluish-00);
   --dsw-alias-bg-layer-2: var(--dsw-static-neutral-bluish-00);
   --dsw-alias-bg-layer-3: var(--dsw-static-neutral-bluish-00);
   --dsw-alias-bg-skeleton: rgba(0, 0, 0, 0.04);
@@ -125,12 +134,17 @@ body {
   --dsw-alias-border-l2-darkmode-thin: rgba(0, 0, 0, 0.1);
   --dsw-alias-border-l2: rgba(0, 0, 0, 0.1);
   --dsw-alias-border-l3: rgba(0, 0, 0, 0.12);
+  --dsw-alias-border-l4: rgba(0, 0, 0, 0.16);
   --dsw-alias-brand-primary-invert: var(--dsw-static-blue-500);
   --dsw-alias-brand-primary: var(--dsw-static-blue-500);
   --dsw-alias-brand-text: var(--dsw-static-blue-500);
   --dsw-alias-button-contrast-fill: var(--dsw-static-neutral-bluish-700);
   --dsw-alias-button-elevated-fill: var(--dsw-static-neutral-bluish-00);
   --dsw-alias-button-floating-fill: var(--dsw-static-neutral-bluish-00);
+  --dsw-alias-scrollbar-bg-l1: var(--dsw-static-neutral-200);
+  --dsw-alias-scrollbar-bg-l2: var(--dsw-static-neutral-200);
+  --dsw-alias-scrollbar-hover-l1: var(--dsw-static-neutral-300);
+  --dsw-alias-scrollbar-hover-l2: var(--dsw-static-neutral-300);
   --dsw-alias-button-floating-hover: var(--dsw-static-neutral-bluish-75);
   --dsw-alias-button-ghost-active-border: var(--dsw-static-blue-300);
   --dsw-alias-button-ghost-active-fill: var(--dsw-static-blue-50);
@@ -170,6 +184,7 @@ body {
 
 body[data-ds-dark-theme] {
   --dsw-alias-bg-base: var(--dsw-static-neutral-bluish-950);
+  --dsw-alias-bg-layer-1: var(--dsw-static-neutral-bluish-875);
   --dsw-alias-bg-layer-2: var(--dsw-static-neutral-bluish-850);
   --dsw-alias-bg-layer-3: var(--dsw-static-neutral-bluish-800);
   --dsw-alias-bg-skeleton: rgba(255, 255, 255, 0.08);
@@ -178,12 +193,17 @@ body[data-ds-dark-theme] {
   --dsw-alias-border-l2-darkmode-thin: rgba(255, 255, 255, 0.06);
   --dsw-alias-border-l2: rgba(255, 255, 255, 0.12);
   --dsw-alias-border-l3: rgba(255, 255, 255, 0.16);
+  --dsw-alias-border-l4: rgba(255, 255, 255, 0.2);
   --dsw-alias-brand-primary-invert: var(--dsw-static-neutral-bluish-00);
   --dsw-alias-brand-primary: var(--dsw-static-blue-450);
   --dsw-alias-brand-text: var(--dsw-static-blue-400);
   --dsw-alias-button-contrast-fill: var(--dsw-static-neutral-bluish-50);
   --dsw-alias-button-elevated-fill: var(--dsw-static-neutral-bluish-750);
   --dsw-alias-button-floating-fill: var(--dsw-static-neutral-bluish-850);
+  --dsw-alias-scrollbar-bg-l1: var(--dsw-static-neutral-700);
+  --dsw-alias-scrollbar-bg-l2: var(--dsw-static-neutral-600);
+  --dsw-alias-scrollbar-hover-l1: var(--dsw-static-neutral-600);
+  --dsw-alias-scrollbar-hover-l2: var(--dsw-static-neutral-550);
   --dsw-alias-button-floating-hover: var(--dsw-static-neutral-bluish-800);
   --dsw-alias-button-ghost-active-border: var(--dsw-static-blue-600);
   --dsw-alias-button-ghost-active-fill: var(--dsw-static-blue-900);

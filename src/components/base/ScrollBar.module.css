@@ -1,0 +1,32 @@
+.gutter {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  width: 10px;
+  padding-right: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s ease-out;
+  transition-delay: 1s;
+}
+
+.visible {
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.thumb {
+  margin-left: auto;
+  border-radius: 100px;
+  background-color: var(--dsw-alias-scrollbar-bg-l1);
+  pointer-events: auto;
+  cursor: default;
+  transition: background-color 0.1s ease-out;
+
+  &:hover,
+  &:active {
+    background-color: var(--dsw-alias-scrollbar-hover-l1);
+  }
+}

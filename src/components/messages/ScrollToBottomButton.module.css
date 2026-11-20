@@ -1,4 +1,3 @@
-/* 浮在输入框右上方；定位基准是输入框容器（桌面端 sticky、移动端 relative） */
 .wrapper {
   position: absolute;
   bottom: 100%;
@@ -25,7 +24,6 @@
   }
 }
 
-/* 生成中的品牌蓝旋转光环，与官网一致 */
 .halo {
   --halo-ring-width: 1.5px;
   --halo-color: var(--dsw-alias-brand-primary);

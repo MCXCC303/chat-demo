@@ -1,4 +1,3 @@
-/** DeepSeek Logo */
 export const DeepSeekWhaleIcon = ({ size = 50 }: { size?: number }) => (
   <svg
     width={size}

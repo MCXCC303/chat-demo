@@ -237,7 +237,7 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
               }
             }}
           >
-            {recording ? t('voiceInputStop') : t('holdToTalk')}
+            {recording ? null : t('holdToTalk')}
           </button>
         ) : null}
         {recording && isMobile ? <Spectrum getAnalyser={voice.getAnalyser} /> : null}

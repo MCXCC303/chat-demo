@@ -214,8 +214,6 @@ body[data-ds-dark-theme] {
 body {
   --dsw-alias-bg-base: var(--dsw-static-neutral-bluish-00);
   --dsw-alias-bg-multi-select: var(--dsw-static-neutral-bluish-60);
-  --dsw-sidebar-mask-fill: var(--dsw-static-neutral-bluish-75);
-  --dsw-sidebar-mask-fill-active: var(--dsw-static-blue-100);
   --dsw-alias-bg-layer-1: var(--dsw-static-neutral-bluish-00);
   --dsw-alias-bg-layer-2: var(--dsw-static-neutral-bluish-00);
   --dsw-alias-bg-layer-3: var(--dsw-static-neutral-bluish-00);
@@ -276,8 +274,6 @@ body {
 body[data-ds-dark-theme] {
   --dsw-alias-bg-base: var(--dsw-static-neutral-bluish-950);
   --dsw-alias-bg-multi-select: var(--dsw-static-neutral-bluish-850);
-  --dsw-sidebar-mask-fill: var(--dsw-static-neutral-bluish-850);
-  --dsw-sidebar-mask-fill-active: var(--dsw-static-neutral-bluish-800);
   --dsw-alias-bg-layer-1: var(--dsw-static-neutral-bluish-875);
   --dsw-alias-bg-layer-2: var(--dsw-static-neutral-bluish-850);
   --dsw-alias-bg-layer-3: var(--dsw-static-neutral-bluish-800);
@@ -335,9 +331,37 @@ body[data-ds-dark-theme] {
   --dsw-specific-sidebar-nav-item-hover: var(--dsw-static-neutral-bluish-850);
 }
 
+@media not all and (min-width: 768px) {
+  body {
+    --dsw-font-markdown-base-mobile: 16px/26px var(--dsw-font-family);
+    --dsw-font-markdown-small-mobile: 14px/22px var(--dsw-font-family);
+    --dsw-specific-toggle-height: 29px;
+    --dsw-specific-toggle-radius: 14.5px;
+  }
+
+  body[data-ds-dark-theme] {
+    --dsw-alias-bg-base: #0f0f0f;
+    --dsw-alias-bg-layer-1: #0f0f0f;
+    --dsw-specific-sidebar-fill: #0f0f0f;
+    --dsw-specific-sidebar-nav-item-active-accent: #283142;
+    --dsw-specific-sidebar-nav-item-active-label: #849cf7;
+    --dsw-specific-sidebar-nav-item-hover: #262626;
+    --dsw-alias-label-primary: #ecebf2;
+    --dsw-alias-label-tertiary: #9a9a9d;
+    --dsw-alias-markdown-code-block: #0f0f0f;
+    --dsw-alias-markdown-code-block-banner: #0f0f0f;
+    --dsw-specific-input-major: #242424;
+    --dsw-specific-search-fill: #292929;
+    --dsw-specific-message-caveat: #d4d4d4;
+    --dsw-specific-toggle-fill: #283142;
+    --dsw-specific-toggle-label: #88a3f2;
+  }
+}
+
 body {
   --dsw-shadow-lv3:
     0 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 4px 0 rgba(0, 0, 0, 0.02), 0 12px 32px 0 rgba(0, 0, 0, 0.08);
+  --dsw-sider-width: 299px;
 }
 
 body {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type CSSProperties } from 'react'
 import { useTranslate } from '../i18n/index.js'
 import { useSettings } from '../services/settings.js'
 import { useIsMobile, useMobileViewport, usePreventPageScroll } from './viewport.js'
@@ -22,13 +22,18 @@ import { onUploadNotice } from '../services/attachments.js'
 import { Button } from '../components/base/Button.js'
 import { stopReadAloud } from '../services/speech/readAloud.js'
 import { CollapsedSider } from '../components/sider/CollapsedSider.js'
-import { closeMobileSider } from '../components/sider/mobileSiderState.js'
+import { closeMobileSider, useMobileSider } from '../components/sider/mobileSiderState.js'
 import { MobileSider, Sider } from '../components/sider/Sider.js'
+import { useMobileDrawerDrag } from '../components/sider/useMobileDrawerDrag.js'
 import styles from './App.module.css'
 
 export const App = () => {
   const t = useTranslate()
   const isMobile = useIsMobile()
+  const mobileSiderOpen = useMobileSider((state) => state.open)
+  const mobileSiderOffset = useMobileSider((state) => state.offset)
+  const mobileSiderProgress = useMobileSider((state) => state.progress)
+  const mobileSiderDragging = useMobileSider((state) => state.dragging)
   const locale = useSettings((state) => state.locale)
   // 移动端侧边栏以独立抽屉管理开合状态
   const siderCollapsed = useSettings((state) => state.siderCollapsed) && !isMobile
@@ -54,6 +59,12 @@ export const App = () => {
   const activeId = useChatStore((state) => state.activeId)
 
   usePreventPageScroll(isMobile)
+  useMobileDrawerDrag(isMobile)
+
+  const mobileSiderStyle = {
+    '--mobile-sider-offset': `${mobileSiderOffset}px`,
+    '--mobile-sider-progress': mobileSiderProgress,
+  } as CSSProperties
 
   useEffect(() => {
     document.documentElement.lang = locale
@@ -82,9 +93,20 @@ export const App = () => {
 
   return (
     <>
-      <div ref={frameRef} className={styles.frame}>
+      <div
+        ref={frameRef}
+        className={
+          styles.frame +
+          (isMobile
+            ? ' ' +
+              (mobileSiderOpen ? styles.drawerFrameOpen : '') +
+              (mobileSiderDragging ? ' ' + styles.drawerDragging : '')
+            : '')
+        }
+        style={isMobile ? mobileSiderStyle : undefined}
+      >
         {isMobile ? <MobileSider /> : siderCollapsed ? null : <Sider />}
-        <main className={styles.main}>
+        <main className={styles.main + (isMobile ? ' ' + styles.mainShifted : '')}>
           {saveError ? (
             <div className={styles.saveError} role="alert">
               <span>{t('sessionSaveFailed')}</span>

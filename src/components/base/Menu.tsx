@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useIsMobile } from '../../app/viewport.js'
 import { useAnchoredPosition, useDismiss } from './anchored.js'
 import styles from './Menu.module.css'
 
@@ -22,10 +23,13 @@ export const Menu = ({
 }) => {
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
+  const mobile = useIsMobile()
   // 左侧对齐并再左移 5px，让菜单文字与触发元素图标对齐
   const { anchorRef, floatingRef, position } = useAnchoredPosition<HTMLSpanElement, HTMLDivElement>(
     open,
-    { align: 'start', alignOffset: -5, offset: 4 }
+    mobile
+      ? { align: 'end', alignOffset: 0, offset: 24 }
+      : { align: 'start', alignOffset: -5, offset: 4 }
   )
   useDismiss(open, [anchorRef, floatingRef], close)
 

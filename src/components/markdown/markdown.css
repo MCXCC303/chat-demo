@@ -3,6 +3,12 @@
   color: var(--dsw-alias-label-primary);
 }
 
+@media not all and (min-width: 768px) {
+  .ds-markdown {
+    font: var(--dsw-font-markdown-base-mobile);
+  }
+}
+
 .ds-markdown strong {
   font-weight: 600;
 }
@@ -325,6 +331,16 @@
   margin-bottom: 11px;
 }
 
+@media not all and (min-width: 768px) {
+  .md-code-block {
+    --dsl-code-block-border-radius: 16px;
+  }
+
+  .md-code-block-banner {
+    border-bottom: 1px solid var(--dsw-alias-border-l2);
+  }
+}
+
 .md-code-block-banner-wrap {
   position: sticky;
   top: 0;
@@ -399,4 +415,10 @@
   padding: 16px;
   color: var(--dsw-alias-label-secondary);
   font-size: 14px;
+}
+
+@media not all and (min-width: 768px) {
+  .md-code-block > pre {
+    padding: 14px 16px;
+  }
 }

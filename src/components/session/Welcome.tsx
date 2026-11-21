@@ -17,10 +17,9 @@ export const Welcome = () => {
           <div className={styles.logo}>
             <DeepSeekWhaleIcon size={34} />
           </div>
-          <span>{t('welcomeMessageChat250808')}</span>
+          <span>{t(isMobile ? 'welcomeMessageMobile' : 'welcomeMessageChat250808')}</span>
         </div>
         <ChatInput sessionId={null} />
-        {isMobile ? <div className={styles.caveat}>{t('contentCaveat')}</div> : null}
       </div>
     </div>
   )

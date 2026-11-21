@@ -39,7 +39,9 @@ export const SessionView = ({
           <div className={styles.inputContainer} data-chat-input-area>
             <ScrollToBottomButton />
             <ChatInput sessionId={session.id} />
-            <div className={styles.caveat}>{t('contentCaveat')}</div>
+            <div className={styles.caveat}>
+              {t(isMobile ? 'contentCaveatMobile' : 'contentCaveat')}
+            </div>
           </div>
         }
       />

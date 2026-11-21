@@ -1,3 +1,11 @@
+.messageCaveat {
+  margin-top: 8px;
+  color: var(--dsw-specific-message-caveat);
+  font-size: 15px;
+  line-height: 22px;
+  font-style: italic;
+}
+
 .message {
   position: relative;
 
@@ -135,5 +143,19 @@
   &.summaryActive {
     background-color: var(--dsw-alias-interactive-bg-hover);
     --search-row-site-logo-color: var(--dsw-alias-interactive-bg-hover);
+  }
+}
+
+@media not all and (min-width: 768px) {
+  .actions {
+    gap: 2px;
+  }
+
+  .actions button[class][class] {
+    --ds-control-height-xs: 16px;
+    min-width: 16px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
   }
 }

@@ -4,7 +4,7 @@ import {
   toggleReadAloud,
   useReadAloud,
 } from '../../services/speech/readAloud.js'
-import { IconPlayMediaOutline16 } from '../base/icons.js'
+import { IconSpeakerOutline16 } from '../base/icons.js'
 import { IconButton } from '../base/IconButton.js'
 import { showToast } from '../base/toastState.js'
 import { ReadingBars } from './ReadingBars.js'
@@ -13,14 +13,18 @@ import { ReadingBars } from './ReadingBars.js'
 export const ReadAloudButton = ({ messageId, text }: { messageId: string; text: string }) => {
   const t = useTranslate()
   const status = useReadAloud((state) => (state.messageId === messageId ? state.status : 'idle'))
+  const muted = useReadAloud((state) => state.muted)
   return (
     <IconButton
-      icon={status === 'idle' ? <IconPlayMediaOutline16 /> : <ReadingBars mode={status} />}
+      icon={status === 'idle' ? <IconSpeakerOutline16 /> : <ReadingBars mode={status} />}
       tooltip={status === 'idle' ? t('ttsPlay') : t('ttsStop')}
       tooltipPlacement="bottom"
-      onClick={() =>
+      onClick={() => {
+        if (muted) {
+          return
+        }
         toggleReadAloud(messageId, text, (error) => showToast(describeReadAloudError(error)))
-      }
+      }}
     />
   )
 }

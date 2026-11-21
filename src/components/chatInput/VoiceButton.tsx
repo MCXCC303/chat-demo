@@ -1,6 +1,8 @@
 import clsx from 'clsx'
+import { useRef } from 'react'
 import { useTranslate } from '../../i18n/index.js'
-import { IconMicFill16, IconMicOutline16 } from '../base/icons.js'
+import { IconMicFill16, IconMicOutline16, IconVolumeUpOutline20 } from '../base/icons.js'
+import { useIsMobile } from '../../app/viewport.js'
 import { Tooltip } from '../base/Tooltip.js'
 import type { VoiceInputStatus } from './useVoiceInput.js'
 import styles from './VoiceButton.module.css'
@@ -25,6 +27,8 @@ export const VoiceButton = ({
   onClick: () => void
 }) => {
   const t = useTranslate()
+  const isMobile = useIsMobile()
+  const holding = useRef(false)
   const recording = status === 'recording'
 
   const label = disabled
@@ -49,7 +53,43 @@ export const VoiceButton = ({
           aria-label={label}
           aria-pressed={recording}
           aria-disabled={disabled}
+          onPointerDown={
+            isMobile
+              ? () => {
+                  if (disabled || status !== 'idle') {
+                    return
+                  }
+                  holding.current = true
+                  onClick()
+                }
+              : undefined
+          }
+          onPointerUp={
+            isMobile
+              ? () => {
+                  if (!holding.current) {
+                    return
+                  }
+                  holding.current = false
+                  onClick()
+                }
+              : undefined
+          }
+          onPointerLeave={
+            isMobile
+              ? () => {
+                  if (!holding.current) {
+                    return
+                  }
+                  holding.current = false
+                  onClick()
+                }
+              : undefined
+          }
           onClick={() => {
+            if (isMobile) {
+              return
+            }
             if (!disabled) {
               onClick()
             }
@@ -68,6 +108,8 @@ export const VoiceButton = ({
             </span>
           ) : status === 'transcribing' ? (
             <span className={styles.loading} />
+          ) : isMobile ? (
+            <IconVolumeUpOutline20 />
           ) : (
             <IconMicOutline16 />
           )}

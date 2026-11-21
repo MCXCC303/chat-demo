@@ -11,6 +11,7 @@ import {
   IconThinkOutline14,
   IconVoiceOutline20,
 } from '../base/icons.js'
+import { IconButton } from '../base/IconButton.js'
 import { setSearch, setThinking, useSettings } from '../../services/settings.js'
 import { useIsMobile } from '../../app/viewport.js'
 import { sendMessage, stopReply, useChatStore } from '../../services/chat/store.js'
@@ -180,9 +181,7 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
       }}
     >
       <DraftAttachments items={attachments} onRetry={retryFile} onRemove={removeFile} />
-      <div
-        className={clsx(styles.textareaWrapper, holdToTalk && isMobile && styles.holdToTalkArea)}
-      >
+      <div className={styles.textareaWrapper}>
         <textarea
           ref={textareaRef}
           className={clsx(
@@ -238,7 +237,7 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
               }
             }}
           >
-            {recording ? t('voiceInputStop') : t('holdToTalk')}
+            {recording ? null : t('holdToTalk')}
           </button>
         ) : null}
         {recording && isMobile ? <Spectrum getAnalyser={voice.getAnalyser} /> : null}
@@ -275,15 +274,6 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
           </Tooltip>
         </div>
         <div className={styles.right}>
-          <button
-            type="button"
-            className={styles.circleButton}
-            aria-label={t('uploadFile')}
-            disabled={importingHistory}
-            onClick={() => ensureApiKey() && fileInputRef.current?.click()}
-          >
-            {isMobile ? <IconPlusOutline20 /> : <IconPaperclipOutline16 />}
-          </button>
           {isMobile ? null : (
             <VoiceButton
               status={voice.status}
@@ -297,6 +287,26 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
                   void voice.toggle()
                 }
               }}
+            />
+          )}
+          {isMobile ? (
+            <button
+              type="button"
+              className={styles.circleButton}
+              aria-label={t('uploadFile')}
+              disabled={importingHistory}
+              onClick={() => ensureApiKey() && fileInputRef.current?.click()}
+            >
+              <IconPlusOutline20 />
+            </button>
+          ) : (
+            <IconButton
+              size="m"
+              tone="primary"
+              icon={<IconPaperclipOutline16 />}
+              tooltip={t('uploadFile')}
+              disabled={importingHistory}
+              onClick={() => ensureApiKey() && fileInputRef.current?.click()}
             />
           )}
           <input

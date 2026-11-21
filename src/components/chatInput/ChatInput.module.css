@@ -168,10 +168,6 @@
   width: 100%;
 }
 
-.textareaWrapper.holdToTalkArea {
-  min-height: 88px;
-}
-
 .textarea,
 .mirror {
   display: block;

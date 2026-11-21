@@ -23,6 +23,5 @@ declare const styles: {
   readonly circleButton: string
   readonly holdToTalk: string
   readonly holdToTalkActive: string
-  readonly holdToTalkArea: string
 }
 export = styles

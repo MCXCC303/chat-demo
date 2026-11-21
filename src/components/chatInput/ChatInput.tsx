@@ -181,9 +181,7 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
       }}
     >
       <DraftAttachments items={attachments} onRetry={retryFile} onRemove={removeFile} />
-      <div
-        className={clsx(styles.textareaWrapper, holdToTalk && isMobile && styles.holdToTalkArea)}
-      >
+      <div className={styles.textareaWrapper}>
         <textarea
           ref={textareaRef}
           className={clsx(

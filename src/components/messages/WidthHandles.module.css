@@ -1,0 +1,52 @@
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  width: min(10px, calc((100% - var(--message-list-column-width)) / 2 - 24px - 16px));
+  cursor: col-resize;
+}
+
+.handle[data-side='left'] {
+  right: calc(50% + var(--message-list-column-width) / 2 + 24px);
+}
+
+.handle[data-side='right'] {
+  left: calc(50% + var(--message-list-column-width) / 2 + 24px);
+}
+
+.handle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: var(--dsw-radius-xs);
+  background: linear-gradient(
+    to bottom,
+    transparent calc(var(--message-list-handle-pointer-y, 50%) - 36px),
+    var(--dsw-alias-scrollbar-bg-l1) calc(var(--message-list-handle-pointer-y, 50%) - 8px),
+    var(--dsw-alias-scrollbar-bg-l1) calc(var(--message-list-handle-pointer-y, 50%) + 8px),
+    transparent calc(var(--message-list-handle-pointer-y, 50%) + 36px)
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+.handle[data-side='left']::after {
+  right: 4px;
+}
+
+.handle[data-side='right']::after {
+  left: 4px;
+}
+
+.handle[data-dragging]::after {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .handle:hover::after {
+    opacity: 1;
+  }
+}

@@ -14,6 +14,7 @@ import { ScrollBar } from '../base/ScrollBar.js'
 import { ScrollNav, type ScrollNavItem } from './ScrollNav.js'
 import { ScrollToBottomContext, ScrollToLatestContext } from './scrollContext.js'
 import { UserMessage } from './UserMessage.js'
+import { WidthHandles } from './WidthHandles.js'
 import type { Message } from '../../services/chat/types.js'
 
 /**
@@ -324,6 +325,7 @@ export const MessageList = ({
           </div>
           <ScrollBar containerRef={scrollRef} size={6} inset={4} />
           <ScrollNav items={navItems} activeId={activeNavId} onSelect={scrollToQuestion} />
+          {isMobile ? null : <WidthHandles containerRef={scrollRef} columnRef={contentRef} />}
         </div>
       </ScrollToLatestContext.Provider>
     </ScrollToBottomContext.Provider>

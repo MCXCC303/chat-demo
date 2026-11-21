@@ -1,11 +1,18 @@
 :root {
-  --message-list-max-width: 840px;
+  --message-list-default-width: 840px;
   --message-list-padding-horizontal: 44px;
+  --message-list-column-width: var(
+    --message-list-width-pref,
+    calc(var(--message-list-default-width) - 2 * var(--message-list-padding-horizontal))
+  );
+  --message-list-max-width: calc(
+    var(--message-list-column-width) + 2 * var(--message-list-padding-horizontal)
+  );
 }
 
 @media (max-width: 1023px) {
   :root {
-    --message-list-max-width: 712px;
+    --message-list-default-width: 712px;
     --message-list-padding-horizontal: 36px;
   }
 }

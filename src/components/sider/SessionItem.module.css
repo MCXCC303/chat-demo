@@ -40,9 +40,32 @@
 }
 
 .action {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
   display: none;
-  flex-shrink: 0;
-  margin-left: 4px;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--dsw-sidebar-mask-fill) 0%, transparent) 0%,
+    color-mix(in srgb, var(--dsw-sidebar-mask-fill) 50%, transparent) 20.23%,
+    var(--dsw-sidebar-mask-fill) 40.62%
+  );
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+
+  button {
+    pointer-events: auto;
+  }
+}
+
+.active .action {
+  --dsw-sidebar-mask-fill: var(--dsw-sidebar-mask-fill-active);
 }
 
 .renameInput {

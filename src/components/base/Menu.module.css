@@ -2,6 +2,15 @@
   display: inline-flex;
 }
 
+@media not all and (min-width: 768px) {
+  .anchor {
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 .menu {
   position: fixed;
   z-index: 900;
@@ -43,5 +52,30 @@
 
   &:hover {
     background-color: var(--dsw-alias-interactive-bg-hover-danger);
+  }
+}
+
+@media not all and (min-width: 768px) {
+  .menu {
+    min-width: 187px;
+  }
+
+  .option {
+    padding: 10px;
+  }
+
+  .option + .option {
+    position: relative;
+    border-top: none;
+  }
+
+  .option + .option::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -4px;
+    left: -4px;
+    height: 1px;
+    background-color: var(--dsw-alias-border-l2);
   }
 }

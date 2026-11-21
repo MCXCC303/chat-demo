@@ -168,6 +168,10 @@
   width: 100%;
 }
 
+.textareaWrapper.holdToTalkArea {
+  min-height: 88px;
+}
+
 .textarea,
 .mirror {
   display: block;
@@ -204,6 +208,45 @@
 /* 录音中由频谱接管第一行，隐藏正文但保留高度 */
 .textareaHidden {
   visibility: hidden;
+}
+
+.circleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 50%;
+  background: none;
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+}
+
+.holdToTalk {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+}
+
+.holdToTalkActive {
+  background-color: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
 }
 
 @media not all and (min-width: 440px) {
@@ -328,5 +371,25 @@
   &.disabled {
     opacity: 0.4;
     cursor: not-allowed;
+  }
+}
+
+@media not all and (min-width: 768px) {
+  .functionRow {
+    padding: 8px 12px;
+  }
+
+  .toggle {
+    height: var(--dsw-specific-toggle-height);
+    padding: 0 8px;
+    border-radius: var(--dsw-specific-toggle-radius);
+    border: 1px solid rgba(136, 163, 242, 0.25);
+    background-color: transparent;
+    color: var(--dsw-alias-label-tertiary);
+  }
+
+  .toggle.selected {
+    background-color: var(--dsw-specific-toggle-fill);
+    color: var(--dsw-specific-toggle-label);
   }
 }

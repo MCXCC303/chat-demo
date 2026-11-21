@@ -1,11 +1,15 @@
 import clsx from 'clsx'
-import { memo, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   IconGlobeLanguageOutline14,
+  IconKeyboardOutline20,
   IconPaperclipOutline16,
+  IconPlusOutline20,
   IconSendOutline16,
+  IconSendUpOutline16,
   IconStopFill16,
   IconThinkOutline14,
+  IconVoiceOutline20,
 } from '../base/icons.js'
 import { setSearch, setThinking, useSettings } from '../../services/settings.js'
 import { useIsMobile } from '../../app/viewport.js'
@@ -21,7 +25,6 @@ import {
   useDrafts,
 } from '../../services/chat/drafts.js'
 import { stopReadAloud } from '../../services/speech/readAloud.js'
-import { IconButton } from '../base/IconButton.js'
 import { Tooltip } from '../base/Tooltip.js'
 import { ensureApiKey } from '../settings/settingsDialogState.js'
 import { DragMask, useFileDrop } from './DragMask.js'
@@ -52,6 +55,9 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
   const thinking = useSettings((state) => state.thinking)
   const importingHistory = useChatStore((state) => state.importingHistory)
   const isMobile = useIsMobile()
+  const [holdToTalk, setHoldToTalk] = useState(false)
+  const holdToTalkRef = useRef(false)
+  const sendRef = useRef<() => void>(() => {})
   const search = useSettings((state) => state.search)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -101,8 +107,12 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
   )
   const dragging = useFileDrop(acceptFiles)
 
-  /** 转写结果插入到光标处，并把光标移到插入内容之后 */
   const voice = useVoiceInput((transcript) => {
+    if (holdToTalkRef.current) {
+      setText(transcript)
+      requestAnimationFrame(() => sendRef.current())
+      return
+    }
     const textarea = textareaRef.current
     const current = getDraft(sessionId).text
     const start = textarea?.selectionStart ?? current.length
@@ -152,6 +162,14 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
     }
   }
 
+  useLayoutEffect(() => {
+    sendRef.current = send
+  })
+
+  useEffect(() => {
+    holdToTalkRef.current = holdToTalk
+  }, [holdToTalk])
+
   return (
     <div
       className={clsx(styles.wrapper, sessionId === null ? styles.home : styles.session)}
@@ -162,11 +180,16 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
       }}
     >
       <DraftAttachments items={attachments} onRetry={retryFile} onRemove={removeFile} />
-      <div className={styles.textareaWrapper}>
+      <div
+        className={clsx(styles.textareaWrapper, holdToTalk && isMobile && styles.holdToTalkArea)}
+      >
         <textarea
           ref={textareaRef}
-          className={clsx(styles.textarea, recording && isMobile && styles.textareaHidden)}
-          placeholder={t('chatInputPlaceholderChat')}
+          className={clsx(
+            styles.textarea,
+            (recording || holdToTalk) && isMobile && styles.textareaHidden
+          )}
+          placeholder={t(isMobile ? 'chatInputPlaceholderChatMobile' : 'chatInputPlaceholderChat')}
           rows={2}
           // 移动端不自动聚焦，避免一打开就弹出键盘
           autoFocus={!isMobile}
@@ -194,6 +217,30 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
             }
           }}
         />
+        {holdToTalk && isMobile ? (
+          <button
+            type="button"
+            className={clsx(styles.holdToTalk, recording && styles.holdToTalkActive)}
+            aria-label={t('holdToTalk')}
+            onPointerDown={() => {
+              if (voice.available) {
+                void voice.toggle()
+              }
+            }}
+            onPointerUp={() => {
+              if (voice.status !== 'idle') {
+                void voice.toggle()
+              }
+            }}
+            onPointerLeave={() => {
+              if (voice.status !== 'idle') {
+                void voice.toggle()
+              }
+            }}
+          >
+            {recording ? t('voiceInputStop') : t('holdToTalk')}
+          </button>
+        ) : null}
         {recording && isMobile ? <Spectrum getAnalyser={voice.getAnalyser} /> : null}
         <div className={styles.mirror} aria-hidden>
           {`${text}\n`}
@@ -228,27 +275,30 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
           </Tooltip>
         </div>
         <div className={styles.right}>
-          <VoiceButton
-            status={voice.status}
-            disabled={!voice.available}
-            seconds={voice.seconds}
-            onClick={() => {
-              if (
-                voice.status !== 'idle' ||
-                (!useChatStore.getState().importingHistory && ensureApiKey())
-              ) {
-                void voice.toggle()
-              }
-            }}
-          />
-          <IconButton
-            size="m"
-            tone="primary"
-            icon={<IconPaperclipOutline16 />}
-            tooltip={t('uploadFile')}
+          <button
+            type="button"
+            className={styles.circleButton}
+            aria-label={t('uploadFile')}
             disabled={importingHistory}
             onClick={() => ensureApiKey() && fileInputRef.current?.click()}
-          />
+          >
+            {isMobile ? <IconPlusOutline20 /> : <IconPaperclipOutline16 />}
+          </button>
+          {isMobile ? null : (
+            <VoiceButton
+              status={voice.status}
+              disabled={!voice.available}
+              seconds={voice.seconds}
+              onClick={() => {
+                if (
+                  voice.status !== 'idle' ||
+                  (!useChatStore.getState().importingHistory && ensureApiKey())
+                ) {
+                  void voice.toggle()
+                }
+              }}
+            />
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -271,6 +321,37 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
               }}
             >
               <IconStopFill16 />
+            </button>
+          ) : isMobile ? (
+            <button
+              type="button"
+              className={holdToTalk || !draftReady ? styles.circleButton : styles.sendButton}
+              aria-label={
+                holdToTalk
+                  ? t('voiceInputBackToKeyboard')
+                  : draftReady
+                    ? t('send')
+                    : t('voiceInput')
+              }
+              onClick={() => {
+                if (holdToTalk) {
+                  setHoldToTalk(false)
+                  return
+                }
+                if (draftReady) {
+                  send()
+                  return
+                }
+                setHoldToTalk(true)
+              }}
+            >
+              {holdToTalk ? (
+                <IconKeyboardOutline20 />
+              ) : draftReady ? (
+                <IconSendUpOutline16 />
+              ) : (
+                <IconVoiceOutline20 />
+              )}
             </button>
           ) : (
             <button

@@ -4,7 +4,7 @@ import {
   toggleReadAloud,
   useReadAloud,
 } from '../../services/speech/readAloud.js'
-import { IconSpeakerOutline16 } from '../base/icons.js'
+import { IconSpeakerOutline20 } from '../base/icons.js'
 import { IconButton } from '../base/IconButton.js'
 import { showToast } from '../base/toastState.js'
 import { ReadingBars } from './ReadingBars.js'
@@ -16,7 +16,7 @@ export const ReadAloudButton = ({ messageId, text }: { messageId: string; text: 
   const muted = useReadAloud((state) => state.muted)
   return (
     <IconButton
-      icon={status === 'idle' ? <IconSpeakerOutline16 /> : <ReadingBars mode={status} />}
+      icon={status === 'idle' ? <IconSpeakerOutline20 /> : <ReadingBars mode={status} />}
       tooltip={status === 'idle' ? t('ttsPlay') : t('ttsStop')}
       tooltipPlacement="bottom"
       onClick={() => {

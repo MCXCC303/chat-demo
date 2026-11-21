@@ -15,9 +15,24 @@
   background: var(--dsw-alias-bg-base);
 }
 
-.title {
+.titleWrap {
+  display: flex;
+  flex: 1;
+  min-width: 0;
   max-width: 480px;
+}
+
+.title {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 60vw;
+  height: 40px;
+  margin-left: -11px;
   padding: 8px 12px;
+  position: relative;
+  top: -3px;
+  border: 1px solid transparent;
+  border-radius: 22px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

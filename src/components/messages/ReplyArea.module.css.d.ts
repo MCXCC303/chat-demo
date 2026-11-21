@@ -1,6 +1,8 @@
 declare const styles: {
   readonly "area": string;
   readonly "title": string;
+  readonly "fade": string;
+  readonly "sentinel": string;
   readonly "titleIcon": string;
   readonly "stoppedIcon": string;
   readonly "titleText": string;

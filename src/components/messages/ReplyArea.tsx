@@ -1,6 +1,6 @@
 import { useTranslate } from '../../i18n/index.js'
 import clsx from 'clsx'
-import { memo, useEffect, useState, type ReactNode } from 'react'
+import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   IconBrowseOutline16,
   IconBrowseWarningOutline16,
@@ -32,6 +32,7 @@ import { Tooltip } from '../base/Tooltip.js'
 import { Markdown } from '../markdown/Markdown.js'
 import { SiteThumbnails } from '../search/SiteLogo.js'
 import { toggleSearchPanel, useSearchPanel } from '../search/searchPanelState.js'
+import { findScrollContainer } from '../../utils/scroll.js'
 import styles from './ReplyArea.module.css'
 import './thinking.markdown.css'
 
@@ -68,6 +69,41 @@ export const ReplyArea = memo(function ReplyArea({
   const [open, setOpen] = useState(true)
   const titleActive = streaming && !hasResponse
   useTicker(titleActive, 1000)
+  const areaRef = useRef<HTMLDivElement>(null)
+  const fadeRef = useRef<HTMLDivElement>(null)
+  const topRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const fade = fadeRef.current
+    const top = topRef.current
+    const bottom = bottomRef.current
+    const scroll = findScrollContainer(areaRef.current)
+    if (!fade || !top || !bottom || !scroll) {
+      return
+    }
+    let frame = 0
+    const update = () => {
+      frame = 0
+      const scrollRect = scroll.getBoundingClientRect()
+      const topRect = top.getBoundingClientRect()
+      const bottomRect = bottom.getBoundingClientRect()
+      const covering = topRect.top < scrollRect.top && bottomRect.bottom >= scrollRect.top
+      fade.style.opacity = covering && open ? '1' : '0'
+    }
+    const schedule = () => {
+      frame ||= requestAnimationFrame(update)
+    }
+    scroll.addEventListener('scroll', schedule, { passive: true })
+    update()
+    return () => {
+      scroll.removeEventListener('scroll', schedule)
+      if (frame) {
+        cancelAnimationFrame(frame)
+      }
+    }
+  }, [open])
+
   if (view.steps.length === 0 && !(message.thinking && streaming)) {
     return null
   }
@@ -76,7 +112,7 @@ export const ReplyArea = memo(function ReplyArea({
   const title = thinking ? getAreaTitle(view, streaming, Date.now(), hasResponse) : null
   const stopped = !streaming && !hasResponse
   return (
-    <div className={styles.area}>
+    <div className={styles.area} ref={areaRef}>
       {title ? (
         <div className={styles.title} onClick={() => setOpen((value) => !value)}>
           <span className={clsx(styles.titleIcon, stopped && styles.stoppedIcon)}>
@@ -84,8 +120,10 @@ export const ReplyArea = memo(function ReplyArea({
           </span>
           <span className={clsx(styles.titleText, titleActive && styles.shimmer)}>{title}</span>
           {open ? <IconChevronDownOutline14 /> : <IconChevronRightOutline14 />}
+          <div ref={fadeRef} className={styles.fade} />
         </div>
       ) : null}
+      <div ref={topRef} className={styles.sentinel} />
       {open || !title ? (
         <div className={styles.steps}>
           {view.steps.map((step, index) => (
@@ -100,6 +138,7 @@ export const ReplyArea = memo(function ReplyArea({
           ))}
         </div>
       ) : null}
+      <div ref={bottomRef} className={styles.sentinel} />
     </div>
   )
 })

@@ -16,9 +16,22 @@ type ReadAloudState = {
   /** 正在朗读的回复 id */
   messageId: string | null
   status: ReadAloudStatus
+  muted: boolean
 }
 
-export const useReadAloud = create<ReadAloudState>(() => ({ messageId: null, status: 'idle' }))
+export const useReadAloud = create<ReadAloudState>(() => ({
+  messageId: null,
+  status: 'idle',
+  muted: false,
+}))
+
+export const toggleMuted = () => {
+  const muted = !useReadAloud.getState().muted
+  if (muted) {
+    stopReadAloud()
+  }
+  useReadAloud.setState({ muted })
+}
 
 /** 首帧前多缓冲一点，减少网络抖动造成的断续 */
 const START_DELAY = 0.1

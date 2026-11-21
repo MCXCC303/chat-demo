@@ -401,3 +401,79 @@ body.light .md-code-block {
     color: hsla(230, 8%, 24%, 0.2);
   }
 }
+
+@media not all and (min-width: 768px) {
+  body.dark .md-code-block {
+    .token.comment,
+    .token.prolog,
+    .token.doctype,
+    .token.cdata {
+      color: #6f7478;
+    }
+
+    .token.punctuation,
+    .token.delimiter.important,
+    .token.selector .parent,
+    .token.tag,
+    .token.tag .token.punctuation,
+    .token.builtin,
+    .token.keyword-array,
+    .token.package,
+    .token.regex,
+    .token.function,
+    .token.selector .token.class,
+    .token.selector .token.id,
+    .token.atrule .token.rule,
+    .token.combinator,
+    .token.keyword,
+    .token.operator,
+    .token.pseudo-class,
+    .token.pseudo-element,
+    .token.selector,
+    .token.unit,
+    .token.entity {
+      color: #e2e3e4;
+    }
+
+    .token.attr-name,
+    .token.boolean,
+    .token.boolean.important,
+    .token.number,
+    .token.constant,
+    .token.selector .token.attribute,
+    .token.class-name,
+    .token.key,
+    .token.parameter,
+    .token.property,
+    .token.property-access {
+      color: #c49c82;
+    }
+
+    .token.variable {
+      color: #a0ba8d;
+    }
+
+    .token.attr-value,
+    .token.inserted,
+    .token.color,
+    .token.selector .token.value,
+    .token.string,
+    .token.string .token.url-link {
+      color: #e2e3e4;
+    }
+
+    .token.deleted {
+      color: #cd6660;
+    }
+
+    .token.keyword-this,
+    .token.this {
+      color: #e2e3e4;
+    }
+
+    .language-markdown .token.title,
+    .language-markdown .token.title .token.punctuation {
+      color: #e2e3e4;
+    }
+  }
+}

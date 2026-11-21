@@ -94,3 +94,19 @@
     }
   }
 }
+
+@media not all and (min-width: 768px) {
+  .ds-think-content .ds-markdown {
+    font: var(--dsw-font-markdown-small-mobile);
+
+    .ds-markdown-paragraph,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      margin: 24px 0;
+    }
+  }
+}

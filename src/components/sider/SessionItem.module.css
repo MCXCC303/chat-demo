@@ -28,6 +28,46 @@
       }
     }
   }
+
+  @media (hover: none) {
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(
+        circle closest-side at var(--press-x) var(--press-y),
+        rgba(255, 255, 255, 0.16),
+        transparent
+      );
+      opacity: 0;
+      transition: opacity 180ms ease;
+      pointer-events: none;
+    }
+
+    &.pressed::after {
+      opacity: 1;
+    }
+  }
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--dsw-alias-label-tertiary);
+  color: var(--dsw-alias-label-primary);
+}
+
+.checkboxSelected {
+  background-color: var(--dsw-specific-sidebar-nav-item-active-accent);
+  border-color: var(--dsw-specific-sidebar-nav-item-active-label);
+  color: var(--dsw-specific-sidebar-nav-item-active-label);
 }
 
 .title {
@@ -40,6 +80,7 @@
 }
 
 .action {
+  --dsw-sidebar-mask-fill: var(--dsw-specific-sidebar-nav-item-hover);
   position: absolute;
   top: 0;
   bottom: 0;
@@ -65,7 +106,7 @@
 }
 
 .active .action {
-  --dsw-sidebar-mask-fill: var(--dsw-sidebar-mask-fill-active);
+  --dsw-sidebar-mask-fill: var(--dsw-specific-sidebar-nav-item-active-accent);
 }
 
 .renameInput {
@@ -85,15 +126,28 @@
 @media (hover: none) {
   .action {
     display: flex;
+    visibility: hidden;
+  }
+
+  .active .action {
+    visibility: visible;
   }
 }
 
 @media not all and (min-width: 768px) {
   .item {
     height: 44px;
-    padding: 11px 6px 11px 12px;
-    border-radius: 16px;
-    font-size: 16px;
+    padding: 11px 6px 11px 13px;
+    border-radius: 12px;
+    font-size: 15px;
+  }
+
+  .item.active {
+    color: var(--dsw-specific-sidebar-nav-item-active-label);
+  }
+
+  .action button {
+    color: var(--dsw-alias-label-tertiary);
   }
 
   .title {
@@ -102,8 +156,8 @@
 
   .renameInput {
     height: 44px;
-    padding: 0 12px;
-    border-radius: 16px;
-    font-size: 16px;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 15px;
   }
 }

@@ -96,7 +96,12 @@ export const useChatStore = create<ChatState>(() => ({
 const { getState: get, setState: set } = useChatStore
 
 const sortSessions = (sessions: SessionSummary[]) =>
-  [...sessions].sort((a, b) => b.updatedAt - a.updatedAt)
+  [...sessions].sort((a, b) => {
+    if (Boolean(a.pinned) !== Boolean(b.pinned)) {
+      return a.pinned ? -1 : 1
+    }
+    return b.updatedAt - a.updatedAt
+  })
 
 const getSession = (id: string) => {
   const cache = get().sessionCache
@@ -109,7 +114,10 @@ const getStreamController = (id: string) => {
 }
 
 const sameSummary = (a: SessionSummary, b: SessionSummary) =>
-  a.title === b.title && a.createdAt === b.createdAt && a.updatedAt === b.updatedAt
+  a.title === b.title &&
+  a.createdAt === b.createdAt &&
+  a.updatedAt === b.updatedAt &&
+  Boolean(a.pinned) === Boolean(b.pinned)
 
 const sessionAccess = new Map<string, number>()
 const unsavedSessions = new Set<string>()
@@ -480,6 +488,23 @@ export const renameSession = (id: string, title: string) => {
       ),
     }))
     void db.renameSession(id, title).catch(db.reportStorageError('rename session'))
+  }
+}
+
+export const setSessionPinned = (id: string, pinned: boolean) => {
+  if (get().importingHistory || deletingSessions.has(id)) {
+    return
+  }
+  if (getSession(id)) {
+    updateSession(id, (session) => ({ ...session, pinned }))
+    persist(id)
+  } else {
+    set((state) => ({
+      sessions: sortSessions(
+        state.sessions.map((session) => (session.id === id ? { ...session, pinned } : session))
+      ),
+    }))
+    void db.setSessionPinned(id, pinned).catch(db.reportStorageError('pin session'))
   }
 }
 

@@ -234,6 +234,14 @@
   }
 }
 
+.stepsWindowed {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  max-height: 78px;
+  overflow: hidden;
+}
+
 .prefix,
 .summary {
   flex-shrink: 0;

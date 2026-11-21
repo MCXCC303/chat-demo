@@ -66,8 +66,16 @@ export const ReplyArea = memo(function ReplyArea({
   hasResponse: boolean
 }) {
   useTranslate()
-  const [open, setOpen] = useState(true)
+  const [mode, setMode] = useState<'window' | 'full' | 'hidden'>('window')
   const titleActive = streaming && !hasResponse
+  const wasActive = useRef(false)
+
+  useEffect(() => {
+    if (wasActive.current && !titleActive) {
+      setMode('hidden')
+    }
+    wasActive.current = titleActive
+  }, [titleActive])
   useTicker(titleActive, 1000)
   const areaRef = useRef<HTMLDivElement>(null)
   const fadeRef = useRef<HTMLDivElement>(null)
@@ -89,7 +97,7 @@ export const ReplyArea = memo(function ReplyArea({
       const topRect = top.getBoundingClientRect()
       const bottomRect = bottom.getBoundingClientRect()
       const covering = topRect.top < scrollRect.top && bottomRect.bottom >= scrollRect.top
-      fade.style.opacity = covering && open ? '1' : '0'
+      fade.style.opacity = covering && mode !== 'hidden' ? '1' : '0'
     }
     const schedule = () => {
       frame ||= requestAnimationFrame(update)
@@ -102,7 +110,7 @@ export const ReplyArea = memo(function ReplyArea({
         cancelAnimationFrame(frame)
       }
     }
-  }, [open])
+  }, [mode])
 
   if (view.steps.length === 0 && !(message.thinking && streaming)) {
     return null
@@ -114,18 +122,23 @@ export const ReplyArea = memo(function ReplyArea({
   return (
     <div className={styles.area} ref={areaRef}>
       {title ? (
-        <div className={styles.title} onClick={() => setOpen((value) => !value)}>
+        <div
+          className={styles.title}
+          onClick={() =>
+            setMode((value) => (value === 'full' ? (titleActive ? 'window' : 'hidden') : 'full'))
+          }
+        >
           <span className={clsx(styles.titleIcon, stopped && styles.stoppedIcon)}>
             <IconThinkOutline16 />
           </span>
           <span className={clsx(styles.titleText, titleActive && styles.shimmer)}>{title}</span>
-          {open ? <IconChevronDownOutline14 /> : <IconChevronRightOutline14 />}
+          {mode === 'full' ? <IconChevronDownOutline14 /> : <IconChevronRightOutline14 />}
           <div ref={fadeRef} className={styles.fade} />
         </div>
       ) : null}
       <div ref={topRef} className={styles.sentinel} />
-      {open || !title ? (
-        <div className={styles.steps}>
+      {mode !== 'hidden' || !title ? (
+        <div className={clsx(styles.steps, mode === 'window' && styles.stepsWindowed)}>
           {view.steps.map((step, index) => (
             <StepItem
               key={stepKey(step, index)}

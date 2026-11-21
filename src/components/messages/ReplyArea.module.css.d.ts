@@ -20,6 +20,7 @@ declare const styles: {
   readonly "active": string;
   readonly "prefix": string;
   readonly "summary": string;
+  readonly "stepsWindowed": string;
   readonly "query": string;
   readonly "fadeIn": string;
   readonly "tool": string;

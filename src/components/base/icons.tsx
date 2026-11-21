@@ -25,6 +25,41 @@ export const IconChevronRightOutline14 = () => (
   </svg>
 )
 
+export const IconChevronExpandVerticalOutline20 = () => (
+  <svg width={20} height={20} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M6 12.7L8.955 14.948C9.4 15.286 9.622 15.455 9.875 15.488C9.958 15.499 10.041 15.499 10.124 15.488C10.377 15.455 10.599 15.286 11.044 14.948L14 12.7"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <path
+      d="M14 7.742L11.044 5.494C10.599 5.156 10.377 4.987 10.124 4.954C10.041 4.943 9.958 4.943 9.875 4.954C9.622 4.987 9.4 5.156 8.955 5.494L6 7.742"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+  </svg>
+)
+
+export const IconChevronDownOutline20 = () => (
+  <svg width={20} height={20} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M4.375 8.19L8.728 12.539C9.258 13.068 9.523 13.333 9.844 13.384C9.947 13.401 10.053 13.401 10.156 13.384C10.477 13.333 10.742 13.068 11.272 12.539L15.625 8.19"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+  </svg>
+)
+
+export const IconChevronRightOutline20 = () => (
+  <svg width={20} height={20} viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M7.587 15.625L11.936 11.272C12.465 10.742 12.73 10.477 12.781 10.156C12.797 10.053 12.797 9.947 12.781 9.844C12.73 9.523 12.465 9.258 11.936 8.728L7.587 4.375"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+  </svg>
+)
+
 export const IconCloseFill14 = () => (
   <svg width={14} height={14} viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path

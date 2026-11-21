@@ -1,11 +1,15 @@
 import { useTranslate } from '../../i18n/index.js'
 import clsx from 'clsx'
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useIsMobile } from '../../app/viewport.js'
 import {
   IconBrowseOutline16,
   IconBrowseWarningOutline16,
   IconChevronDownOutline14,
+  IconChevronDownOutline20,
+  IconChevronExpandVerticalOutline20,
   IconChevronRightOutline14,
+  IconChevronRightOutline20,
   IconCheckedOutline14,
   IconCloseFill14,
   IconLinkOutline16,
@@ -66,13 +70,53 @@ export const ReplyArea = memo(function ReplyArea({
   hasResponse: boolean
 }) {
   useTranslate()
-  const [open, setOpen] = useState(true)
+  const isMobile = useIsMobile()
   const titleActive = streaming && !hasResponse
+  const [mode, setMode] = useState<'window' | 'full' | 'hidden'>(() =>
+    titleActive ? (isMobile ? 'window' : 'full') : 'hidden'
+  )
+  const wasActive = useRef(false)
+
+  useEffect(() => {
+    if (wasActive.current && !titleActive) {
+      setMode('hidden')
+    }
+    wasActive.current = titleActive
+  }, [titleActive])
+
+  useEffect(() => {
+    if (!isMobile) {
+      setMode((value) => (value === 'window' ? 'full' : value))
+    }
+  }, [isMobile])
   useTicker(titleActive, 1000)
   const areaRef = useRef<HTMLDivElement>(null)
   const fadeRef = useRef<HTMLDivElement>(null)
   const topRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const stepsRef = useRef<HTMLDivElement>(null)
+  const [clipped, setClipped] = useState(false)
+
+  useEffect(() => {
+    const steps = stepsRef.current
+    if (!steps || !isMobile) {
+      setClipped(false)
+      return
+    }
+    const update = () => {
+      let height = 0
+      for (const child of Array.from(steps.children)) {
+        height += child.getBoundingClientRect().height
+      }
+      setClipped(height > steps.clientHeight + 1)
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    for (const child of Array.from(steps.children)) {
+      observer.observe(child)
+    }
+    return () => observer.disconnect()
+  }, [isMobile, mode, view.steps.length])
 
   useEffect(() => {
     const fade = fadeRef.current
@@ -89,7 +133,7 @@ export const ReplyArea = memo(function ReplyArea({
       const topRect = top.getBoundingClientRect()
       const bottomRect = bottom.getBoundingClientRect()
       const covering = topRect.top < scrollRect.top && bottomRect.bottom >= scrollRect.top
-      fade.style.opacity = covering && open ? '1' : '0'
+      fade.style.opacity = covering && mode !== 'hidden' ? '1' : '0'
     }
     const schedule = () => {
       frame ||= requestAnimationFrame(update)
@@ -102,7 +146,7 @@ export const ReplyArea = memo(function ReplyArea({
         cancelAnimationFrame(frame)
       }
     }
-  }, [open])
+  }, [mode])
 
   if (view.steps.length === 0 && !(message.thinking && streaming)) {
     return null
@@ -111,21 +155,73 @@ export const ReplyArea = memo(function ReplyArea({
   const thinking = message.thinking ?? view.steps.some((step) => step.type === 'thinking')
   const title = thinking ? getAreaTitle(view, streaming, Date.now(), hasResponse) : null
   const stopped = !streaming && !hasResponse
+  const mobileIcon =
+    mode === 'full' ? (
+      <IconChevronDownOutline20 />
+    ) : titleActive ? (
+      clipped ? (
+        <IconChevronExpandVerticalOutline20 />
+      ) : null
+    ) : (
+      <IconChevronRightOutline20 />
+    )
   return (
     <div className={styles.area} ref={areaRef}>
       {title ? (
-        <div className={styles.title} onClick={() => setOpen((value) => !value)}>
-          <span className={clsx(styles.titleIcon, stopped && styles.stoppedIcon)}>
-            <IconThinkOutline16 />
-          </span>
-          <span className={clsx(styles.titleText, titleActive && styles.shimmer)}>{title}</span>
-          {open ? <IconChevronDownOutline14 /> : <IconChevronRightOutline14 />}
+        <div
+          className={styles.title}
+          onClick={() => {
+            if (isMobile && !mobileIcon) {
+              return
+            }
+            setMode((value) =>
+              isMobile
+                ? value === 'full'
+                  ? titleActive
+                    ? 'window'
+                    : 'hidden'
+                  : 'full'
+                : value === 'hidden'
+                  ? 'full'
+                  : 'hidden'
+            )
+          }}
+        >
+          {isMobile ? (
+            <>
+              <span
+                className={clsx(
+                  styles.titleText,
+                  stopped && styles.stoppedText,
+                  titleActive && styles.shimmer
+                )}
+              >
+                {title}
+              </span>
+              {mobileIcon ? <span className={styles.titleToggle}>{mobileIcon}</span> : null}
+            </>
+          ) : (
+            <>
+              <span className={clsx(styles.titleIcon, stopped && styles.stoppedIcon)}>
+                <IconThinkOutline16 />
+              </span>
+              <span className={clsx(styles.titleText, titleActive && styles.shimmer)}>{title}</span>
+              {mode === 'full' ? <IconChevronDownOutline14 /> : <IconChevronRightOutline14 />}
+            </>
+          )}
           <div ref={fadeRef} className={styles.fade} />
         </div>
       ) : null}
       <div ref={topRef} className={styles.sentinel} />
-      {open || !title ? (
-        <div className={styles.steps}>
+      {mode !== 'hidden' || !title ? (
+        <div
+          ref={stepsRef}
+          className={clsx(
+            styles.steps,
+            mode === 'window' && styles.stepsWindowed,
+            mode === 'window' && clipped && styles.stepsClipped
+          )}
+        >
           {view.steps.map((step, index) => (
             <StepItem
               key={stepKey(step, index)}

@@ -5,6 +5,8 @@ declare const styles: {
   readonly "sentinel": string;
   readonly "titleIcon": string;
   readonly "stoppedIcon": string;
+  readonly "titleToggle": string;
+  readonly "stoppedText": string;
   readonly "titleText": string;
   readonly "shimmer": string;
   readonly "withLine": string;
@@ -20,6 +22,8 @@ declare const styles: {
   readonly "active": string;
   readonly "prefix": string;
   readonly "summary": string;
+  readonly "stepsWindowed": string;
+  readonly "stepsClipped": string;
   readonly "query": string;
   readonly "fadeIn": string;
   readonly "tool": string;

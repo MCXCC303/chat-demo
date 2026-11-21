@@ -105,13 +105,15 @@ export const CodeBlock = memo(function CodeBlock({
   }, [code, lang, loaded])
   return (
     <div className="md-code-block">
-      <div className="md-code-block-banner">
-        <CodeInfoRow
-          code={code}
-          infostring={infostring}
-          showDiagram={showDiagram}
-          onToggleDiagram={isMermaid ? () => setShowDiagram((show) => !show) : undefined}
-        />
+      <div className="md-code-block-banner-wrap">
+        <div className="md-code-block-banner">
+          <CodeInfoRow
+            code={code}
+            infostring={infostring}
+            showDiagram={showDiagram}
+            onToggleDiagram={isMermaid ? () => setShowDiagram((show) => !show) : undefined}
+          />
+        </div>
       </div>
       {isMermaid && showDiagram ? (
         <MermaidDiagram code={code} loading={loading} />

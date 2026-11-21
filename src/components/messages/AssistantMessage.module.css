@@ -145,17 +145,3 @@
     --search-row-site-logo-color: var(--dsw-alias-interactive-bg-hover);
   }
 }
-
-@media not all and (min-width: 768px) {
-  .actions {
-    gap: 2px;
-  }
-
-  .actions button[class][class] {
-    --ds-control-height-xs: 16px;
-    min-width: 16px;
-    width: 16px;
-    height: 16px;
-    padding: 0;
-  }
-}

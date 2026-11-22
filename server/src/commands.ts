@@ -636,6 +636,9 @@ export class SessionCommands {
       current = await runAssistantStream({
         reply: current,
         events,
+        onProgress: (reply) => {
+          current = reply
+        },
         sink: {
           block: async (index, block) => {
             handle.seqs.push(

@@ -277,15 +277,20 @@ export const runAssistantStream = async (options: {
   reply: AssistantMessage
   events: AsyncGenerator<MessageStreamEvent>
   sink: StreamSink
+  onProgress?: (reply: AssistantMessage) => void
   now?: () => number
 }): Promise<AssistantMessage> => {
   const now = options.now ?? Date.now
   let reply = options.reply
   const blockIndexes = new Map<number, number>()
+  const apply = (event: MessageStreamEvent): void => {
+    reply = applyEvent(reply, event, now(), blockIndexes)
+    options.onProgress?.(reply)
+  }
   for await (const event of options.events) {
     if (event.type === 'content_block_start') {
       const before = reply.blocks.length
-      reply = applyEvent(reply, event, now(), blockIndexes)
+      apply(event)
       const index = blockIndexes.get(event.index)
       if (index !== undefined && reply.blocks.length > before) {
         await options.sink.block(index, reply.blocks[index])
@@ -294,13 +299,13 @@ export const runAssistantStream = async (options: {
     }
     if (event.type === 'content_block_stop') {
       const index = blockIndexes.get(event.index)
-      reply = applyEvent(reply, event, now(), blockIndexes)
+      apply(event)
       if (index !== undefined) {
         await options.sink.blockEnd(index)
       }
       continue
     }
-    reply = applyEvent(reply, event, now(), blockIndexes)
+    apply(event)
     if (event.type === 'content_block_delta') {
       const index = blockIndexes.get(event.index)
       if (index !== undefined) {

@@ -116,6 +116,19 @@
   margin-top: 24px;
 }
 
+.listWrap::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 19;
+  height: 72px;
+  background: linear-gradient(180deg, transparent 0%, var(--dsw-specific-sidebar-fill) 80.65%);
+  opacity: var(--bottom-fade-opacity, 1);
+  pointer-events: none;
+}
+
 .list {
   height: 100%;
   margin: 0 -2px;
@@ -301,6 +314,28 @@
 
   .listWrap {
     margin-top: 8px;
+  }
+
+  .listWrap::after {
+    bottom: -12px;
+  }
+
+  .listWrap::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 19;
+    height: 46px;
+    background: linear-gradient(
+      180deg,
+      var(--dsw-specific-sidebar-fill) 0,
+      var(--dsw-specific-sidebar-fill) 22px,
+      transparent 46px
+    );
+    opacity: var(--top-fade-opacity, 0);
+    pointer-events: none;
   }
 
   .list {

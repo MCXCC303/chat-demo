@@ -24,6 +24,8 @@ import { closeMobileSider, useMobileSider } from './mobileSiderState.js'
 import { SessionItem } from './SessionItem.js'
 import styles from './Sider.module.css'
 
+const TOP_FADE_DISTANCE = 20
+
 /** 展开的侧边栏：名称与收起按钮、开启新对话、按时间分组的会话列表、底部设置；移动端放在抽屉里，收起按钮关闭抽屉 */
 export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const t = useTranslate()
@@ -74,6 +76,40 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
       window.removeEventListener('focus', refresh)
     }
   }, [])
+
+  useEffect(() => {
+    const list = listRef.current
+    const wrap = list?.parentElement
+    if (!list || !wrap) {
+      return
+    }
+    let frame = 0
+    const update = () => {
+      frame = 0
+      const remaining = list.scrollHeight - list.clientHeight - list.scrollTop
+      const top = Math.min(1, list.scrollTop / TOP_FADE_DISTANCE)
+      const bottom = Math.min(1, remaining / TOP_FADE_DISTANCE)
+      wrap.style.setProperty('--top-fade-opacity', top.toFixed(3))
+      wrap.style.setProperty('--bottom-fade-opacity', bottom.toFixed(3))
+    }
+    const schedule = () => {
+      frame ||= requestAnimationFrame(update)
+    }
+    update()
+    const resizeObserver = new ResizeObserver(schedule)
+    resizeObserver.observe(list)
+    for (const child of list.children) {
+      resizeObserver.observe(child)
+    }
+    list.addEventListener('scroll', schedule, { passive: true })
+    return () => {
+      resizeObserver.disconnect()
+      list.removeEventListener('scroll', schedule)
+      if (frame) {
+        cancelAnimationFrame(frame)
+      }
+    }
+  }, [visibleGroups])
 
   return (
     <div className={clsx(styles.sider, mobile && styles.mobile)}>

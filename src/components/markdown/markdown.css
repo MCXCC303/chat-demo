@@ -3,6 +3,16 @@
   color: var(--dsw-alias-label-primary);
 }
 
+.token {
+  animation: token-in 0.4s ease-out;
+}
+
+@keyframes token-in {
+  from {
+    opacity: 0;
+  }
+}
+
 @media not all and (min-width: 768px) {
   .ds-markdown {
     font: var(--dsw-font-markdown-base-mobile);

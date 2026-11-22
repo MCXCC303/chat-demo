@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react'
 import type { Source } from '../../services/chat/view.js'
 import { toMdAst } from '../../services/markdown/parse.js'
 import { useScrollToBottom } from '../messages/scrollContext.js'
+import { StreamTokenContext } from './streamToken.js'
 import { MarkdownAstRenderer } from './MarkdownAstRenderer.js'
 import { useThrottleMarkdownRender } from './useThrottleMarkdownRender.js'
 import './markdown.css'
@@ -33,12 +34,14 @@ export const Markdown = memo(function Markdown({
     [throttledMarkdown, sources, disableLink]
   )
   return ast ? (
-    <MarkdownAstRenderer
-      key={cacheKey}
-      className={className}
-      ast={ast}
-      loading={loading}
-      onUpdate={scrollToBottom}
-    />
+    <StreamTokenContext.Provider value={loading}>
+      <MarkdownAstRenderer
+        key={cacheKey}
+        className={className}
+        ast={ast}
+        loading={loading}
+        onUpdate={scrollToBottom}
+      />
+    </StreamTokenContext.Provider>
   ) : null
 })

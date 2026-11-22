@@ -1,4 +1,12 @@
-import { createElement, memo, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
+import {
+  createElement,
+  memo,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from 'react'
 import clsx from 'clsx'
 import type {
   BlockContent,
@@ -9,6 +17,7 @@ import type {
   Table as TableNode,
 } from 'mdast'
 import { CitationLink } from '../search/CitationLink.js'
+import { StreamTokenContext } from './streamToken.js'
 import { CodeBlock } from './CodeBlock.js'
 import { ImageAsLink, Link } from './Link.js'
 import { InlineMath, MathBlock } from './MathFormula.js'
@@ -147,9 +156,17 @@ const MarkdownPhrasingContentItem = memo(function MarkdownPhrasingContentItem({
 
 // 按 \n 拆行插 <br>：源文每个换行（含软换行）都渲染为视觉换行
 const TextContent = memo(function TextContent({ children }: { children: string }) {
+  const streaming = useContext(StreamTokenContext)
   const result: ReactNode[] = []
   children.split(/\r?\n/).forEach((line, index) => {
-    result.push(<span key={index + 's'}>{line}</span>, <br key={index + 'br'} />)
+    const content = streaming
+      ? Array.from(line).map((char, offset) => (
+          <span key={offset} className="token">
+            {char}
+          </span>
+        ))
+      : line
+    result.push(<span key={index + 's'}>{content}</span>, <br key={index + 'br'} />)
   })
   result.pop()
   return result

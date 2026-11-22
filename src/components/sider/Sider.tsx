@@ -54,6 +54,8 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
     setSelectMode(false)
     setSelected([])
   }, [mobile])
+  const ready = useChatStore((state) => state.ready)
+  const initError = useChatStore((state) => state.initError)
   const hasMore = useChatStore((state) => state.hasMore)
   const loadingMore = useChatStore((state) => state.loadingMore)
   const loadMoreError = useChatStore((state) => state.loadMoreError)
@@ -168,6 +170,19 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
       </button>
       <div className={styles.listWrap}>
         <div className={styles.list} ref={listRef}>
+          {!ready && !initError ? (
+            <div className={styles.loadingRows} aria-hidden>
+              <div className={styles.loadingHeaderRow}>
+                <span className={styles.loadingLabel} />
+              </div>
+              <div className={styles.loadingRow}>
+                <span className={styles.loadingBar} />
+              </div>
+              <div className={styles.loadingRow}>
+                <span className={styles.loadingBar} />
+              </div>
+            </div>
+          ) : null}
           {groups.map((group, index) => {
             const range = ranges[index] ?? { start: 0, end: group.sessions.length }
             const head = range.start * metrics.itemHeight

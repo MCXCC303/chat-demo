@@ -9,6 +9,9 @@ declare const styles: {
   readonly list: string
   readonly section: string
   readonly sectionHeader: string
+  readonly loadingRows: string
+  readonly loadingHeaderRow: string
+  readonly loadingLabel: string
   readonly loadingRow: string
   readonly loadingBar: string
   readonly loadingBarShort: string

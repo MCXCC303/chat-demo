@@ -17,7 +17,7 @@ export interface ChatRepository {
   addStagingSession(session: Session): Promise<void>
   saveStagingFiles(files: StoredFile[]): Promise<void>
   updateStagingFileTypes(types: ReadonlyMap<string, string>): Promise<void>
-  commitStaging(): Promise<SessionSummary[]>
+  commitStaging(clear?: boolean): Promise<SessionSummary[]>
 }
 
 let active: ChatRepository | null = null

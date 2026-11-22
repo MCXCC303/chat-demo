@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { readFile, readdir, rm } from 'node:fs/promises'
+import { mkdir, readFile, readdir, rename, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { withLock, writeFileAtomic } from './atomic.ts'
 import { homePath } from './home.ts'
@@ -101,22 +101,59 @@ export class Storage {
     })
   }
 
+  private get nextSessionsDir(): string {
+    return `${this.sessionsDir}.next`
+  }
+
+  private get previousSessionsDir(): string {
+    return `${this.sessionsDir}.previous`
+  }
+
   async replaceSessions(items: { id: string; envelope: SessionEnvelope }[]): Promise<void> {
+    const next = this.nextSessionsDir
+    const previous = this.previousSessionsDir
     await withLock(this.sessionsDir, async () => {
-      let names: string[] = []
-      try {
-        names = await readdir(this.sessionsDir)
-      } catch {
-        names = []
+      await rm(next, { recursive: true, force: true })
+      await mkdir(next, { recursive: true, mode: 0o700 })
+      for (const item of items) {
+        await writeFileAtomic(
+          join(next, `${assertValidId(item.id)}.json`),
+          `${JSON.stringify(item.envelope)}\n`
+        )
       }
-      for (const name of names) {
-        if (name.endsWith('.json')) {
-          await rm(join(this.sessionsDir, name), { force: true })
+      await rm(previous, { recursive: true, force: true })
+      try {
+        await rename(this.sessionsDir, previous)
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+          throw error
         }
       }
-      for (const item of items) {
-        await writeFileAtomic(this.sessionPath(item.id), `${JSON.stringify(item.envelope)}\n`)
+      await rename(next, this.sessionsDir)
+      await rm(previous, { recursive: true, force: true })
+    })
+  }
+
+  async recover(): Promise<void> {
+    await withLock(this.sessionsDir, async () => {
+      const exists = async (path: string): Promise<boolean> => {
+        try {
+          await readdir(path)
+          return true
+        } catch {
+          return false
+        }
       }
+      if (!(await exists(this.sessionsDir))) {
+        for (const candidate of [this.nextSessionsDir, this.previousSessionsDir]) {
+          if (await exists(candidate)) {
+            await rename(candidate, this.sessionsDir)
+            break
+          }
+        }
+      }
+      await rm(this.nextSessionsDir, { recursive: true, force: true })
+      await rm(this.previousSessionsDir, { recursive: true, force: true })
     })
   }
 

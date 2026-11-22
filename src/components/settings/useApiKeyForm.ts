@@ -5,7 +5,7 @@ import { checkCredential, saveCredential, useBackend } from '../../services/back
 import { setApiKey } from '../../services/settings.js'
 import { useTranslate } from '../../i18n/index.js'
 
-/** 输入 API Key 后先校验，通过才保存；本机服务托管时由服务端校验并保存 */
+/** 输入 API Key 后先用 GET /models 校验，通过才保存 */
 export const useApiKeyForm = (onSaved?: () => void) => {
   const t = useTranslate()
   const [value, setValue] = useState('')

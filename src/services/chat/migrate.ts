@@ -1,7 +1,6 @@
 import { indexedDbRepository } from './indexedDbRepository.js'
 import { getRepository, type StoredFile } from './repository.js'
 
-/** 把浏览器里已有的记录搬到本机服务；服务端已有记录时不搬，避免覆盖。 */
 export const migrateToServer = async (): Promise<number> => {
   const summaries = await indexedDbRepository.loadSessionSummaries()
   if (summaries.length === 0) {

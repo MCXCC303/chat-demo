@@ -4,7 +4,6 @@ import { createConfig } from './rspack.config.js'
 const apiOrigin = process.env.API_PROXY === 'off' ? 'https://api.deepseek.com' : ''
 const host = process.env.HOST ?? '127.0.0.1'
 const proxyTarget = process.env.API_TARGET ?? 'https://api.deepseek.com'
-/** 指向本机服务时，接口与存储都转发到它 */
 const serverTarget = process.env.CHAT_DEMO_SERVER
 
 const proxy = [

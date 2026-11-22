@@ -1,0 +1,14 @@
+{
+  "name": "chat-demo-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "chat-demo 的本机服务：凭据托管、模型接口代理、会话与附件存储。",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.ts",
+    "dev": "node --watch src/index.ts"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

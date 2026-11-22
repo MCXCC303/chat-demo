@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslate } from '../../i18n/index.js'
 import { DeepSeekWordmark } from '../base/BrandLogo.js'
 import {
+  IconCloseOutline16,
   IconPanelLeftOutline16,
   IconSearchOutline16,
   IconSelectListOutline14,
@@ -16,13 +17,15 @@ import { newChat, removeSession, useChatStore } from '../../services/chat/store.
 import type { SessionSummary } from '../../services/chat/types.js'
 import { Button } from '../base/Button.js'
 import { IconButton } from '../base/IconButton.js'
-import { ScrollBar } from '../base/ScrollBar.js'
 import { Modal } from '../base/Modal.js'
 import { showToast } from '../base/toastState.js'
 import { openSettings } from '../settings/settingsDialogState.js'
+import { ScrollBar } from '../base/ScrollBar.js'
 import { closeMobileSider, useMobileSider } from './mobileSiderState.js'
 import { SessionItem } from './SessionItem.js'
 import styles from './Sider.module.css'
+
+const TOP_FADE_DISTANCE = 20
 
 /** 展开的侧边栏：名称与收起按钮、开启新对话、按时间分组的会话列表、底部设置；移动端放在抽屉里，收起按钮关闭抽屉 */
 export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
@@ -36,6 +39,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const [query, setQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
+
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -83,8 +87,45 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
     }
   }, [])
 
+  useEffect(() => {
+    const list = listRef.current
+    const wrap = list?.parentElement
+    if (!list || !wrap) {
+      return
+    }
+    let frame = 0
+    const update = () => {
+      frame = 0
+      const remaining = list.scrollHeight - list.clientHeight - list.scrollTop
+      const top = Math.min(1, list.scrollTop / TOP_FADE_DISTANCE)
+      const bottom = Math.min(1, remaining / TOP_FADE_DISTANCE)
+      wrap.style.setProperty('--top-fade-opacity', top.toFixed(3))
+      wrap.style.setProperty('--bottom-fade-opacity', bottom.toFixed(3))
+    }
+    const schedule = () => {
+      frame ||= requestAnimationFrame(update)
+    }
+    update()
+    const resizeObserver = new ResizeObserver(schedule)
+    resizeObserver.observe(list)
+    for (const child of list.children) {
+      resizeObserver.observe(child)
+    }
+    list.addEventListener('scroll', schedule, { passive: true })
+    return () => {
+      resizeObserver.disconnect()
+      list.removeEventListener('scroll', schedule)
+      if (frame) {
+        cancelAnimationFrame(frame)
+      }
+    }
+  }, [visibleGroups])
+
   return (
-    <div className={clsx(styles.sider, mobile && styles.mobile)}>
+    <div
+      className={clsx(styles.sider, mobile && styles.mobile)}
+      data-mobile-sider={mobile || undefined}
+    >
       <div className={styles.top}>
         <div className={styles.brandLogo}>
           <DeepSeekWordmark />
@@ -98,18 +139,36 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
         />
       </div>
       {mobile ? (
-        <div className={styles.search}>
-          <span className={styles.searchIcon}>
-            <IconSearchOutline16 />
-          </span>
-          <input
-            className={styles.searchInput}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t('searchConversations')}
-            aria-label={t('searchConversations')}
-          />
-        </div>
+        selectMode ? (
+          <div className={styles.selectionBar}>
+            <span className={styles.selectionCount}>
+              {t('selectedConversations', { count: selected.length })}
+            </span>
+            <IconButton
+              className={styles.sectionAction}
+              size="xs"
+              icon={<IconCloseOutline16 />}
+              aria-label={t('close')}
+              onClick={() => {
+                setSelectMode(false)
+                setSelected([])
+              }}
+            />
+          </div>
+        ) : (
+          <div className={styles.search}>
+            <span className={styles.searchIcon}>
+              <IconSearchOutline16 />
+            </span>
+            <input
+              className={styles.searchInput}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t('searchConversations')}
+              aria-label={t('searchConversations')}
+            />
+          </div>
+        )
       ) : null}
       <button
         type="button"
@@ -129,20 +188,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
           {visibleGroups.map((group) => (
             <div key={group.key} className={styles.section}>
               <div className={styles.sectionHeader}>
-                <span>
-                  {selectMode
-                    ? t('selectedConversations', { count: selected.length })
-                    : group.label}
-                </span>
-                {mobile ? (
-                  <IconButton
-                    className={styles.sectionAction}
-                    size="xs"
-                    icon={<IconSelectListOutline14 />}
-                    aria-label={t('selectConversations')}
-                    onClick={() => setSelectMode((value) => !value)}
-                  />
-                ) : null}
+                <span>{group.label}</span>
               </div>
               {group.sessions.map((session) => (
                 <SessionItem
@@ -172,7 +218,18 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
             </div>
           ))}
         </div>
-        <ScrollBar containerRef={listRef} size={4} inset={4} />
+        {mobile ? null : (
+          <ScrollBar containerRef={listRef} className={styles.scrollBar} size={8} inset={8} />
+        )}
+        {mobile && !selectMode ? (
+          <IconButton
+            className={styles.selectEntry}
+            size="xs"
+            icon={<IconSelectListOutline14 />}
+            aria-label={t('selectConversations')}
+            onClick={() => setSelectMode(true)}
+          />
+        ) : null}
       </div>
       <div className={styles.bottom}>
         <button type="button" className={styles.settings} onClick={() => openSettings('general')}>

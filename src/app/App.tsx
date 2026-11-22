@@ -16,6 +16,7 @@ import { setRepository } from '../services/chat/repository.js'
 import { SearchPanel } from '../components/search/SearchPanel.js'
 import { closeSearchPanel } from '../components/search/searchPanelState.js'
 import { SessionView } from '../components/session/SessionView.js'
+import { Spinner } from '../components/base/Spinner.js'
 import { MobileHeader } from '../components/session/MobileHeader.js'
 import { Welcome } from '../components/session/Welcome.js'
 import { ensureApiKey } from '../components/settings/settingsDialogState.js'
@@ -138,26 +139,26 @@ export const App = () => {
               <div className={styles.loadingView}>
                 {isMobile ? <MobileHeader /> : null}
                 <div className={styles.loadingState} role="status" aria-live="polite">
-                  <span>
-                    {(!ready ? initError : sessionLoadError)
-                      ? t(!ready ? 'sessionListLoadFailed' : 'sessionLoadFailed')
-                      : t('sessionLoading')}
-                  </span>
                   {(!ready ? initError : sessionLoadError) ? (
-                    <Button
-                      variant="outlined"
-                      size="m"
-                      onClick={() => {
-                        if (!ready) {
-                          void initChat()
-                        } else if (activeId !== null) {
-                          selectSession(activeId)
-                        }
-                      }}
-                    >
-                      {t('retry')}
-                    </Button>
-                  ) : null}
+                    <>
+                      <span>{t(!ready ? 'sessionListLoadFailed' : 'sessionLoadFailed')}</span>
+                      <Button
+                        variant="outlined"
+                        size="m"
+                        onClick={() => {
+                          if (!ready) {
+                            void initChat()
+                          } else if (activeId !== null) {
+                            selectSession(activeId)
+                          }
+                        }}
+                      >
+                        {t('retry')}
+                      </Button>
+                    </>
+                  ) : (
+                    <Spinner />
+                  )}
                 </div>
               </div>
             ) : session ? (

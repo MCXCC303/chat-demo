@@ -4,8 +4,9 @@
   right: 0;
   bottom: 0;
   z-index: 5;
-  width: 10px;
-  padding-right: 2px;
+  display: flex;
+  justify-content: flex-end;
+  width: 8px;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.1s ease-out;
@@ -18,15 +19,20 @@
 }
 
 .thumb {
+  flex: none;
+  width: var(--scrollbar-size, 6px);
   margin-left: auto;
   border-radius: 100px;
   background-color: var(--dsw-alias-scrollbar-bg-l1);
   pointer-events: auto;
   cursor: default;
-  transition: background-color 0.1s ease-out;
+  transition:
+    background-color 0.1s ease-out,
+    width 0.1s ease-out;
 
   &:hover,
   &:active {
+    width: calc(var(--scrollbar-size, 6px) + 2px);
     background-color: var(--dsw-alias-scrollbar-hover-l1);
   }
 }

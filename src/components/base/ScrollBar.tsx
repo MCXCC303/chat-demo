@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
 import clsx from 'clsx'
 import styles from './ScrollBar.module.css'
 
@@ -6,9 +6,10 @@ type ScrollBarProps = {
   containerRef: RefObject<HTMLElement | null>
   size?: number
   inset?: number
+  className?: string
 }
 
-export const ScrollBar = ({ containerRef, size = 6, inset = 0 }: ScrollBarProps) => {
+export const ScrollBar = ({ containerRef, size = 6, inset = 0, className }: ScrollBarProps) => {
   const thumbRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -92,14 +93,14 @@ export const ScrollBar = ({ containerRef, size = 6, inset = 0 }: ScrollBarProps)
 
   return (
     <div
-      className={clsx(styles.gutter, visible && styles.visible)}
+      className={clsx(styles.gutter, visible && styles.visible, className)}
       style={{ paddingTop: inset, paddingBottom: inset }}
       data-scroll-bar
     >
       <div
         ref={thumbRef}
         className={styles.thumb}
-        style={{ width: size }}
+        style={{ '--scrollbar-size': `${size}px` } as CSSProperties}
         onPointerDown={onPointerDown}
       />
     </div>

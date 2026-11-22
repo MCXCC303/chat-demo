@@ -8,6 +8,22 @@
   padding: 6px 12px 0;
   border-right: 1px solid var(--dsw-alias-border-l1);
   background-color: var(--dsw-specific-sidebar-fill);
+  overflow: hidden;
+  transition:
+    width var(--ds-transition-duration) var(--ds-ease-in-out),
+    padding var(--ds-transition-duration) var(--ds-ease-in-out),
+    opacity var(--ds-transition-duration) var(--ds-ease-in-out),
+    border-color var(--ds-transition-duration) var(--ds-ease-in-out);
+}
+
+.siderCollapsed {
+  width: 0;
+  padding-right: 0;
+  padding-left: 0;
+  border-right-width: 0;
+  border-right-color: transparent;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .top {
@@ -26,8 +42,17 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  padding-left: 4px;
+  padding: 0 0 0 4px;
+  border: none;
+  background: none;
+  font: inherit;
   color: var(--dsw-alias-brand-primary);
+  cursor: pointer;
+  transition: opacity var(--ds-transition-duration) var(--ds-ease-in-out);
+}
+
+.brandLogo:hover {
+  opacity: 0.8;
 }
 
 .newChat {

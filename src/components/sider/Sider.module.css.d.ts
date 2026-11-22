@@ -27,6 +27,7 @@ declare const styles: {
   readonly drawerMask: string
   readonly drawerMaskActive: string
   readonly drawerMaskDragging: string
+  readonly siderCollapsed: string
   readonly mobile: string
 }
 export = styles

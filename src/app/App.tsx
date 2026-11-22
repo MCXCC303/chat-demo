@@ -115,7 +115,7 @@ export const App = () => {
             : '')
         }
       >
-        {isMobile ? <MobileSider /> : siderCollapsed ? null : <Sider />}
+        {isMobile ? <MobileSider /> : <Sider collapsed={siderCollapsed} />}
         <main ref={mainRef} className={styles.main + (isMobile ? ' ' + styles.mainShifted : '')}>
           {saveError ? (
             <div className={styles.saveError} role="alert">

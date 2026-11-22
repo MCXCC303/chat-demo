@@ -28,7 +28,13 @@ import styles from './Sider.module.css'
 const TOP_FADE_DISTANCE = 20
 
 /** 展开的侧边栏：名称与收起按钮、开启新对话、按时间分组的会话列表、底部设置；移动端放在抽屉里，收起按钮关闭抽屉 */
-export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
+export const Sider = ({
+  mobile = false,
+  collapsed = false,
+}: {
+  mobile?: boolean
+  collapsed?: boolean
+}) => {
   const t = useTranslate()
   const sessions = useChatStore((state) => state.sessions)
   const activeId = useChatStore((state) => state.activeId)
@@ -108,13 +114,18 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
 
   return (
     <div
-      className={clsx(styles.sider, mobile && styles.mobile)}
+      className={clsx(styles.sider, mobile && styles.mobile, collapsed && styles.siderCollapsed)}
       data-mobile-sider={mobile || undefined}
     >
       <div className={styles.top}>
-        <div className={styles.brandLogo}>
+        <button
+          type="button"
+          className={styles.brandLogo}
+          aria-label={t('newChat')}
+          onClick={() => newChat()}
+        >
           <DeepSeekWordmark />
-        </div>
+        </button>
         <IconButton
           size="m"
           icon={<IconPanelLeftOutline16 />}

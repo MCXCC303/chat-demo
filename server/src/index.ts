@@ -20,6 +20,7 @@ import {
   verifySessionCookie,
 } from './session.ts'
 import { SessionLogStore } from './session-log.ts'
+import { migrateLegacySessions } from './session-migrate.ts'
 import { createSessionService } from './session-service.ts'
 import { Storage } from './storage.ts'
 import { assertTrustedAuthority, isLoopbackHost, isTrustedRequest } from './trust.ts'
@@ -201,6 +202,10 @@ const main = async () => {
   }
 
   const home = resolveHome(options.home)
+  const migration = await migrateLegacySessions(home).catch(() => null)
+  if (migration && migration.migrated > 0) {
+    process.stdout.write(`${LABEL}: migrated ${migration.migrated} legacy sessions\n`)
+  }
   const storage = new Storage(home)
   await storage.recover()
   const credentials = new CredentialStore(home)

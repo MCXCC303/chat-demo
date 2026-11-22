@@ -14,3 +14,17 @@ export const findScrollContainer = (element: HTMLElement | null): HTMLElement | 
   }
   return null
 }
+
+export const isInHorizontalScrollContainer = (target: EventTarget | null) => {
+  for (
+    let element = target instanceof Element ? target : null;
+    element && element !== document.body;
+    element = element.parentElement
+  ) {
+    const style = getComputedStyle(element)
+    if (/auto|scroll/.test(style.overflowX) && element.scrollWidth > element.clientWidth) {
+      return true
+    }
+  }
+  return false
+}

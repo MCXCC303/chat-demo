@@ -163,7 +163,9 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
             </div>
           ))}
         </div>
-        <ScrollBar containerRef={listRef} size={4} inset={4} />
+        {mobile ? null : (
+          <ScrollBar containerRef={listRef} className={styles.scrollBar} size={8} inset={8} />
+        )}
       </div>
       <div className={styles.bottom}>
         <button type="button" className={styles.settings} onClick={() => openSettings('general')}>

@@ -38,6 +38,14 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const [selected, setSelected] = useState<string[]>([])
   const listRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    if (mobile) {
+      return
+    }
+    setSelectMode(false)
+    setSelected([])
+  }, [mobile])
+
   const visibleGroups = useMemo(() => {
     const keyword = query.trim().toLowerCase()
     if (!keyword) {
@@ -142,6 +150,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
                   session={session}
                   active={session.id === activeId}
                   onDelete={() => setDeleting(session)}
+                  allowSelect={mobile}
                   selectMode={selectMode}
                   selected={selected.includes(session.id)}
                   onToggleSelect={() =>

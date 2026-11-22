@@ -35,7 +35,7 @@ export const Menu = ({
 
   return (
     <>
-      <span ref={anchorRef} className={styles.anchor}>
+      <span ref={anchorRef} className={styles.anchor} data-open={open || undefined}>
         {children({ open, toggle: () => setOpen((value) => !value) })}
       </span>
       {open

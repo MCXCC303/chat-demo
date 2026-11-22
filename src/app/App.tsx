@@ -95,7 +95,6 @@ export const App = () => {
       if (useBackend.getState().mode === 'server') {
         setRepository(httpRepository)
         await loadSharedSettings()
-        // 浏览器里已有的记录搬进本机服务，服务端已有记录时不动
         await migrateToServer().catch(() => 0)
       }
       await initChat()

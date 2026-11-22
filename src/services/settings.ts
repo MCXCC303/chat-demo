@@ -20,7 +20,6 @@ type Settings = {
   siderCollapsed: boolean
 }
 
-/** 由本机服务托管的偏好：与设备无关，多台设备共用一份 */
 type SharedSettings = Pick<
   Settings,
   'locale' | 'themePreference' | 'location' | 'ttsVoice' | 'thinking' | 'search'
@@ -119,7 +118,6 @@ const sharedPayload = (): SharedSettings => {
   }
 }
 
-/** 把共享偏好写回本机服务；本机服务不可用时静默忽略，界面仍按当前值工作。 */
 const syncShared = () => {
   if (!isServerMode()) {
     return
@@ -131,7 +129,6 @@ const syncShared = () => {
   }).catch(() => {})
 }
 
-/** 读取本机服务保存的共享偏好；没有记录时保留本地偏好。 */
 export const loadSharedSettings = async (): Promise<void> => {
   if (!isServerMode()) {
     return
@@ -167,7 +164,7 @@ export const loadSharedSettings = async (): Promise<void> => {
     }
     useSettings.setState(next)
   } catch {
-    // 本机服务不可用时保留本地偏好
+    return
   }
 }
 

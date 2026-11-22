@@ -32,6 +32,14 @@ const sendFile = async (res: ServerResponse, path: string, status: number): Prom
   createReadStream(path).pipe(res)
 }
 
+const isFile = async (path: string): Promise<boolean> => {
+  try {
+    return (await stat(path)).isFile()
+  } catch {
+    return false
+  }
+}
+
 export const createStatic =
   (root: string) =>
   async (_req: IncomingMessage, res: ServerResponse, path: string): Promise<void> => {
@@ -48,14 +56,9 @@ export const createStatic =
       res.writeHead(403).end()
       return
     }
-    try {
-      const info = await stat(candidate)
-      if (info.isFile()) {
-        await sendFile(res, candidate, 200)
-        return
-      }
-    } catch {
-      // 落到单页入口
+    if (await isFile(candidate)) {
+      await sendFile(res, candidate, 200)
+      return
     }
     try {
       await sendFile(res, join(rootPath, 'index.html'), 200)

@@ -75,17 +75,6 @@
   margin-right: 6px;
 }
 
-.selectEntry {
-  position: absolute;
-  top: 0;
-  right: 4px;
-  z-index: 21;
-  display: flex;
-  align-items: center;
-  height: 22px;
-  color: var(--dsw-alias-label-tertiary);
-}
-
 .listWrap {
   position: relative;
   flex: 1;
@@ -104,29 +93,6 @@
   background: linear-gradient(180deg, transparent 0%, var(--dsw-specific-sidebar-fill) 80.65%);
   opacity: var(--bottom-fade-opacity, 1);
   pointer-events: none;
-}
-
-.selectionBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  box-sizing: border-box;
-  height: 40px;
-  margin: 10px 12px 0;
-  padding: 0 4px 0 12px;
-  border-radius: 20px;
-  background-color: var(--dsw-specific-search-fill);
-}
-
-.selectionCount {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--dsw-alias-label-primary);
-  font-size: 15px;
-  line-height: 20px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .list {
@@ -243,12 +209,6 @@
   padding: 10px;
   font-size: 13px;
   line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
-}
-
-
-.sectionAction {
-  flex-shrink: 0;
   color: var(--dsw-alias-label-tertiary);
 }
 

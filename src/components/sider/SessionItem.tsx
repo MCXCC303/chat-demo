@@ -3,11 +3,9 @@ import { memo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useTranslate } from '../../i18n/index.js'
 import {
-  IconCheckOutline16,
   IconEditOutline16,
   IconPushPinOutline16,
   IconUnpinOutline16,
-  IconSelectListOutline14,
   IconEllipsisOutline16,
   IconTrashOutline16,
 } from '../base/icons.js'
@@ -22,22 +20,12 @@ export const SessionItem = memo(function SessionItem({
   session,
   active,
   onDelete,
-  selectMode,
-  selected,
-  onToggleSelect,
-  onEnterSelectMode,
   onTogglePin,
-  allowSelect,
 }: {
   session: SessionSummary
   active: boolean
   onDelete: () => void
-  selectMode: boolean
-  selected: boolean
-  onToggleSelect: () => void
-  onEnterSelectMode: () => void
   onTogglePin: () => void
-  allowSelect: boolean
 }) {
   const t = useTranslate()
   const [editing, setEditing] = useState(false)
@@ -110,19 +98,10 @@ export const SessionItem = memo(function SessionItem({
           longPressed.current = false
           return
         }
-        if (selectMode) {
-          onToggleSelect()
-          return
-        }
         selectSession(session.id)
         closeMobileSider()
       }}
     >
-      {selectMode ? (
-        <span className={clsx(styles.checkbox, selected && styles.checkboxSelected)}>
-          {selected ? <IconCheckOutline16 /> : null}
-        </span>
-      ) : null}
       <div className={styles.title}>{displayTitle}</div>
       <div className={styles.action} onClick={(event) => event.stopPropagation()}>
         <Menu
@@ -139,16 +118,6 @@ export const SessionItem = memo(function SessionItem({
               icon: session.pinned ? <IconUnpinOutline16 /> : <IconPushPinOutline16 />,
               onSelect: onTogglePin,
             },
-            ...(allowSelect
-              ? [
-                  {
-                    key: 'multiSelect',
-                    label: t('multiSelect'),
-                    icon: <IconSelectListOutline14 />,
-                    onSelect: onEnterSelectMode,
-                  },
-                ]
-              : []),
             {
               key: 'delete',
               label: t('delete'),

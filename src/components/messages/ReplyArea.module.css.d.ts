@@ -22,6 +22,9 @@ declare const styles: {
   readonly "active": string;
   readonly "prefix": string;
   readonly "summary": string;
+  readonly "collapse": string;
+  readonly "collapseHidden": string;
+  readonly "collapseInner": string;
   readonly "stepsWindowed": string;
   readonly "stepsClipped": string;
   readonly "query": string;

@@ -42,7 +42,7 @@ export const Menu = ({
         ? createPortal(
             <div
               ref={floatingRef}
-              className={styles.menu}
+              className={clsx(styles.menu, mobile && styles.mobile)}
               style={position ?? undefined}
               role="menu"
             >

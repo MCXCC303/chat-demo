@@ -109,6 +109,10 @@
   --dsw-sidebar-mask-fill: var(--dsw-specific-sidebar-nav-item-active-accent);
 }
 
+.action:has([data-open]) {
+  display: flex;
+}
+
 .renameInput {
   box-sizing: border-box;
   width: 100%;

@@ -129,6 +129,11 @@ export const useAnchoredPosition = <T extends HTMLElement, F extends HTMLElement
       return
     }
     const rect = anchor.getBoundingClientRect()
+    // 触发元素被祖先隐藏（如悬停浮层收起后的 display: none）时测量结果是空矩形，
+    // 此时保留上一次位置，避免浮层跳到视口左上角。
+    if (rect.width === 0 && rect.height === 0) {
+      return
+    }
     const spaceAbove = rect.top - offset - VIEWPORT_PADDING
     const spaceBelow = window.innerHeight - rect.bottom - offset - VIEWPORT_PADDING
 

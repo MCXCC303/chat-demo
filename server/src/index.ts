@@ -200,6 +200,7 @@ const main = async () => {
 
   const home = resolveHome(options.home)
   const storage = new Storage(home)
+  await storage.recover()
   const credentials = new CredentialStore(home)
   const api = createApi({
     storage,

@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { API_KEY_REF, type CredentialStore } from './credentials.ts'
 import { homeDisplay } from './home.ts'
-import type { SessionEnvelope, Storage } from './storage.ts'
+import { assertValidId, type SessionEnvelope, type Storage } from './storage.ts'
 
 const sendJson = (res: ServerResponse, status: number, value: unknown): void => {
   const body = JSON.stringify(value)
@@ -141,33 +141,52 @@ export const createApi =
     }
 
     if (path === '/api/sessions/replace' && method === 'POST') {
-      const body = (await readJsonBody(req)) as
-        | {
-            sessions?: {
-              id?: unknown
-              schemaVersion?: unknown
-              session?: unknown
-              summary?: unknown
-            }[]
-          }
-        | undefined
+      const body = (await readJsonBody(req)) as { clear?: unknown; sessions?: unknown } | undefined
+      const entries = body?.sessions
+      if (!Array.isArray(entries)) {
+        sendJson(res, 400, { error: 'sessions must be an array' })
+        return
+      }
+      if (entries.length === 0 && body?.clear !== true) {
+        sendJson(res, 400, { error: 'refusing to clear history without an explicit request' })
+        return
+      }
       const updatedAt = new Date().toISOString()
-      const items = (body?.sessions ?? []).flatMap((entry) => {
-        if (typeof entry.id !== 'string') {
-          return []
+      const items: { id: string; envelope: SessionEnvelope }[] = []
+      for (const entry of entries) {
+        const record = (entry ?? {}) as {
+          id?: unknown
+          schemaVersion?: unknown
+          session?: unknown
+          summary?: unknown
         }
-        return [
-          {
-            id: entry.id,
-            envelope: {
-              schemaVersion: typeof entry.schemaVersion === 'number' ? entry.schemaVersion : 1,
-              session: entry.session,
-              summary: entry.summary,
-              updatedAt,
-            },
+        const session = record.session as { id?: unknown } | undefined
+        const id =
+          typeof record.id === 'string'
+            ? record.id
+            : typeof session?.id === 'string'
+              ? session.id
+              : undefined
+        if (id === undefined) {
+          sendJson(res, 400, { error: 'every session entry needs an id' })
+          return
+        }
+        try {
+          assertValidId(id)
+        } catch {
+          sendJson(res, 400, { error: `invalid session id: ${id}` })
+          return
+        }
+        items.push({
+          id,
+          envelope: {
+            schemaVersion: typeof record.schemaVersion === 'number' ? record.schemaVersion : 1,
+            session: record.session,
+            summary: record.summary,
+            updatedAt,
           },
-        ]
-      })
+        })
+      }
       await storage.replaceSessions(items)
       sendJson(res, 200, {
         sessions: items.map((item) => ({

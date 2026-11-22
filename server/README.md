@@ -78,6 +78,8 @@ pnpm dev:all --port 8090
 
 存储接口由本机服务提供：`/api/status`、`/api/credential`、`/api/settings`、`/api/sessions`、`/api/files`。
 
+`POST /api/sessions/replace` 整体替换全部会话，语义与官方 IndexedDB 版的 `commitStaging` 一致：新数据先写进同级临时目录，全部写完后整体换入，中途失败保留原数据；条目缺少 `id`、`id` 不合法、或 `sessions` 不是数组时一律 400 拒绝；空列表必须带 `clear: true`（仅「清空全部历史」会这样发），否则同样 400。
+
 凭据优先级：存储文件 > 启动环境 > 项目 `.env` > 数据目录下的 `.env`。改了文件下一次请求即生效，不用重启。
 
 ## 隧道访问

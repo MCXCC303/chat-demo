@@ -4,6 +4,7 @@ import { toSessionSummary, type Session, type SessionSummary } from './types.js'
 const SESSION_SCHEMA_VERSION = 1
 
 type SessionPayload = {
+  id: string
   schemaVersion: number
   session: Session
   summary: SessionSummary
@@ -23,6 +24,7 @@ const requestJson = async <T>(path: string, init?: RequestInit): Promise<T> => {
 }
 
 const sessionPayload = (session: Session): SessionPayload => ({
+  id: session.id,
   schemaVersion: SESSION_SCHEMA_VERSION,
   session,
   summary: toSessionSummary(session),
@@ -127,7 +129,7 @@ export const httpRepository: ChatRepository = {
     }
   },
 
-  async commitStaging() {
+  async commitStaging(clear = false) {
     const sessions = [...stagedSessions.values()]
     await putFiles([...stagedFiles].map(([id, blob]) => ({ id, blob })))
     const body = await requestJson<{ sessions: { summary: SessionSummary }[] }>(
@@ -135,7 +137,7 @@ export const httpRepository: ChatRepository = {
       {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ sessions: sessions.map(sessionPayload) }),
+        body: JSON.stringify({ clear, sessions: sessions.map(sessionPayload) }),
       }
     )
     stagedSessions = new Map()

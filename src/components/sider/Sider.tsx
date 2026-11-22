@@ -2,13 +2,7 @@ import clsx from 'clsx'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslate } from '../../i18n/index.js'
 import { DeepSeekWordmark } from '../base/BrandLogo.js'
-import {
-  IconCloseOutline16,
-  IconPanelLeftOutline16,
-  IconSelectListOutline14,
-  IconSettingsOutline16,
-  NewChatIcon,
-} from '../base/icons.js'
+import { IconPanelLeftOutline16, IconSettingsOutline16, NewChatIcon } from '../base/icons.js'
 import { setSiderCollapsed } from '../../services/settings.js'
 import { groupSessions } from '../../services/chat/sessionGroups.js'
 import { setSessionPinned } from '../../services/chat/store.js'
@@ -42,18 +36,9 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const groups = useMemo(() => groupSessions(sessions, now, t), [sessions, now, t])
   const [deleting, setDeleting] = useState<SessionSummary | null>(null)
   const [deletePending, setDeletePending] = useState(false)
-  const [selectMode, setSelectMode] = useState(false)
-  const [selected, setSelected] = useState<string[]>([])
 
   const listRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (mobile) {
-      return
-    }
-    setSelectMode(false)
-    setSelected([])
-  }, [mobile])
   const ready = useChatStore((state) => state.ready)
   const initError = useChatStore((state) => state.initError)
   const hasMore = useChatStore((state) => state.hasMore)
@@ -138,23 +123,6 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
           onClick={() => (mobile ? closeMobileSider() : setSiderCollapsed(true))}
         />
       </div>
-      {mobile && selectMode ? (
-        <div className={styles.selectionBar}>
-          <span className={styles.selectionCount}>
-            {t('selectedConversations', { count: selected.length })}
-          </span>
-          <IconButton
-            className={styles.sectionAction}
-            size="xs"
-            icon={<IconCloseOutline16 />}
-            aria-label={t('close')}
-            onClick={() => {
-              setSelectMode(false)
-              setSelected([])
-            }}
-          />
-        </div>
-      ) : null}
       <button
         type="button"
         className={styles.newChat}
@@ -199,22 +167,6 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
                     session={session}
                     active={session.id === activeId}
                     onDelete={() => setDeleting(session)}
-                    allowSelect={mobile}
-                    selectMode={selectMode}
-                    selected={selected.includes(session.id)}
-                    onToggleSelect={() =>
-                      setSelected((prev) =>
-                        prev.includes(session.id)
-                          ? prev.filter((id) => id !== session.id)
-                          : [...prev, session.id]
-                      )
-                    }
-                    onEnterSelectMode={() => {
-                      setSelectMode(true)
-                      setSelected((prev) =>
-                        prev.includes(session.id) ? prev : [...prev, session.id]
-                      )
-                    }}
                     onTogglePin={() => setSessionPinned(session.id, !session.pinned)}
                   />
                 ))}
@@ -239,15 +191,6 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
         {mobile ? null : (
           <ScrollBar containerRef={listRef} className={styles.scrollBar} size={8} inset={8} />
         )}
-        {mobile && !selectMode ? (
-          <IconButton
-            className={styles.selectEntry}
-            size="xs"
-            icon={<IconSelectListOutline14 />}
-            aria-label={t('selectConversations')}
-            onClick={() => setSelectMode(true)}
-          />
-        ) : null}
       </div>
       <div className={styles.bottom}>
         <button type="button" className={styles.settings} onClick={() => openSettings('general')}>

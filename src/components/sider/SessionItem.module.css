@@ -51,25 +51,6 @@
   }
 }
 
-.checkbox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
-  border-radius: 50%;
-  border: 1px solid var(--dsw-alias-label-tertiary);
-  color: var(--dsw-alias-label-primary);
-}
-
-.checkboxSelected {
-  background-color: var(--dsw-specific-sidebar-nav-item-active-accent);
-  border-color: var(--dsw-specific-sidebar-nav-item-active-label);
-  color: var(--dsw-specific-sidebar-nav-item-active-label);
-}
-
 .title {
   flex: 1;
   min-width: 0;

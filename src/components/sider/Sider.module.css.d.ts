@@ -4,7 +4,6 @@ declare const styles: {
   readonly brandLogo: string
   readonly newChat: string
   readonly newChatIcon: string
-  readonly selectEntry: string
   readonly listWrap: string
   readonly list: string
   readonly section: string
@@ -16,8 +15,6 @@ declare const styles: {
   readonly loadingBar: string
   readonly loadingBarShort: string
   readonly loadMoreError: string
-  readonly selectionBar: string
-  readonly selectionCount: string
   readonly bottom: string
   readonly settings: string
   readonly settingsIcon: string

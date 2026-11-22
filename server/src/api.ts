@@ -2,6 +2,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { API_KEY_REF, type CredentialStore } from './credentials.ts'
 import { homeDisplay } from './home.ts'
 import { assertValidId, type SessionEnvelope, type Storage } from './storage.ts'
+import type { SessionService } from './session-events.ts'
+import { createSessionRoutes } from './session-routes.ts'
 
 const sendJson = (res: ServerResponse, status: number, value: unknown): void => {
   const body = JSON.stringify(value)
@@ -44,6 +46,7 @@ const header = (req: IncomingMessage, name: string): string | undefined => {
 export type ApiOptions = {
   storage: Storage
   credentials: CredentialStore
+  sessions: SessionService
   home: string
   version: string
   upstream: string
@@ -63,6 +66,30 @@ export const createApi =
         home: homeDisplay(options.home),
         credential: await credentials.describe(API_KEY_REF),
       })
+      return
+    }
+
+    if (path === '/api/control' && method === 'GET') {
+      await createSessionRoutes(options.sessions).control(req, res)
+      return
+    }
+
+    if (path.startsWith('/api/sessions/') && path.endsWith('/commands') && method === 'POST') {
+      const id = decodeURIComponent(path.slice('/api/sessions/'.length, -'/commands'.length))
+      await createSessionRoutes(options.sessions).commands(req, res, id)
+      return
+    }
+
+    if (path.startsWith('/api/sessions/') && path.endsWith('/stream') && method === 'GET') {
+      const id = decodeURIComponent(path.slice('/api/sessions/'.length, -'/stream'.length))
+      const url = new URL(req.url ?? '/', 'http://localhost')
+      const after = Number(url.searchParams.get('after') ?? '0')
+      await createSessionRoutes(options.sessions).stream(
+        req,
+        res,
+        id,
+        Number.isFinite(after) && after > 0 ? after : 0
+      )
       return
     }
 
@@ -136,7 +163,7 @@ export const createApi =
     }
 
     if (path === '/api/sessions' && method === 'GET') {
-      sendJson(res, 200, { sessions: await storage.listSessions() })
+      await createSessionRoutes(options.sessions).list(req, res)
       return
     }
 

@@ -1,8 +1,8 @@
 {
-  "name": "chat-demo-server",
-  "version": "0.1.0",
+  "name": "deepseek-web-server",
+  "version": "0.2.0",
   "private": true,
-  "description": "chat-demo 的本机服务：凭据托管、模型接口代理、会话与附件存储。",
+  "description": "deepseek-web 服务端",
   "type": "module",
   "scripts": {
     "start": "node src/index.ts",

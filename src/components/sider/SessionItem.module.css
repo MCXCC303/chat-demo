@@ -89,7 +89,7 @@
   display: none;
   align-items: center;
   justify-content: center;
-  width: 56px;
+  width: 52px;
   pointer-events: none;
   background: linear-gradient(
     90deg,
@@ -136,10 +136,10 @@
 
 @media not all and (min-width: 768px) {
   .item {
-    height: 44px;
-    padding: 11px 6px 11px 13px;
+    height: 40px;
+    padding: 9px 6px 9px 12px;
     border-radius: 12px;
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .item.active {
@@ -155,9 +155,9 @@
   }
 
   .renameInput {
-    height: 44px;
+    height: 40px;
     padding: 0 8px;
     border-radius: 12px;
-    font-size: 15px;
+    font-size: 14px;
   }
 }

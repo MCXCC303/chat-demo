@@ -75,6 +75,17 @@
   margin-right: 6px;
 }
 
+.selectEntry {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  z-index: 21;
+  display: flex;
+  align-items: center;
+  height: 22px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
 .search {
   display: flex;
   align-items: center;
@@ -129,6 +140,29 @@
   pointer-events: none;
 }
 
+.selectionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 40px;
+  margin: 10px 12px 0;
+  padding: 0 4px 0 12px;
+  border-radius: 20px;
+  background-color: var(--dsw-specific-search-fill);
+}
+
+.selectionCount {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-primary);
+  font-size: 15px;
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .list {
   height: 100%;
   margin: 0 -2px;
@@ -180,6 +214,53 @@
 .sectionAction {
   flex-shrink: 0;
   color: var(--dsw-alias-label-tertiary);
+}
+
+@media not all and (min-width: 768px) {
+  .listWrap {
+    margin-top: 14px;
+  }
+
+  .search {
+    height: 40px;
+    margin: 10px 12px 0;
+    border-radius: 20px;
+  }
+
+  .section {
+    margin-top: 10px;
+    padding-top: 2px;
+  }
+
+  .sectionHeader {
+    padding: 2px 8px;
+  }
+
+  .list {
+    scrollbar-width: none;
+  }
+
+  .listWrap::after {
+    bottom: -12px;
+  }
+
+  .listWrap::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 19;
+    height: 46px;
+    background: linear-gradient(
+      180deg,
+      var(--dsw-specific-sidebar-fill) 0,
+      var(--dsw-specific-sidebar-fill) 22px,
+      transparent 46px
+    );
+    opacity: var(--top-fade-opacity, 0);
+    pointer-events: none;
+  }
 }
 
 .bottom {
@@ -314,28 +395,6 @@
 
   .listWrap {
     margin-top: 8px;
-  }
-
-  .listWrap::after {
-    bottom: -12px;
-  }
-
-  .listWrap::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    z-index: 19;
-    height: 46px;
-    background: linear-gradient(
-      180deg,
-      var(--dsw-specific-sidebar-fill) 0,
-      var(--dsw-specific-sidebar-fill) 22px,
-      transparent 46px
-    );
-    opacity: var(--top-fade-opacity, 0);
-    pointer-events: none;
   }
 
   .list {

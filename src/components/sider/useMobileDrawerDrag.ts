@@ -10,6 +10,11 @@ const ENGAGE_THRESHOLD = 10
 const FALLBACK_WIDTH = 261
 
 const readDrawerWidth = () => {
+  const drawer = document.querySelector<HTMLElement>('[data-mobile-sider]')
+  const measured = drawer?.getBoundingClientRect().width ?? 0
+  if (measured > 0) {
+    return measured
+  }
   const raw = getComputedStyle(document.body).getPropertyValue('--dsw-sider-width')
   const width = Number.parseFloat(raw)
   return Number.isFinite(width) && width > 0 ? width : FALLBACK_WIDTH

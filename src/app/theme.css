@@ -393,3 +393,9 @@ body {
 
   --dsw-font-xs-13: 13px/20px var(--dsw-font-family);
 }
+
+@media not all and (min-width: 768px) {
+  body {
+    --dsw-sider-width: min(74vw, 340px);
+  }
+}

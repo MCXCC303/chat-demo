@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslate } from '../../i18n/index.js'
 import { DeepSeekWordmark } from '../base/BrandLogo.js'
 import {
+  IconCloseOutline16,
   IconPanelLeftOutline16,
   IconSearchOutline16,
   IconSelectListOutline14,
@@ -16,10 +17,10 @@ import { newChat, removeSession, useChatStore } from '../../services/chat/store.
 import type { SessionSummary } from '../../services/chat/types.js'
 import { Button } from '../base/Button.js'
 import { IconButton } from '../base/IconButton.js'
-import { ScrollBar } from '../base/ScrollBar.js'
 import { Modal } from '../base/Modal.js'
 import { showToast } from '../base/toastState.js'
 import { openSettings } from '../settings/settingsDialogState.js'
+import { ScrollBar } from '../base/ScrollBar.js'
 import { closeMobileSider, useMobileSider } from './mobileSiderState.js'
 import { SessionItem } from './SessionItem.js'
 import styles from './Sider.module.css'
@@ -38,6 +39,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const [query, setQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
+
   const listRef = useRef<HTMLDivElement>(null)
 
   const visibleGroups = useMemo(() => {
@@ -112,7 +114,10 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   }, [visibleGroups])
 
   return (
-    <div className={clsx(styles.sider, mobile && styles.mobile)}>
+    <div
+      className={clsx(styles.sider, mobile && styles.mobile)}
+      data-mobile-sider={mobile || undefined}
+    >
       <div className={styles.top}>
         <div className={styles.brandLogo}>
           <DeepSeekWordmark />
@@ -126,18 +131,36 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
         />
       </div>
       {mobile ? (
-        <div className={styles.search}>
-          <span className={styles.searchIcon}>
-            <IconSearchOutline16 />
-          </span>
-          <input
-            className={styles.searchInput}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t('searchConversations')}
-            aria-label={t('searchConversations')}
-          />
-        </div>
+        selectMode ? (
+          <div className={styles.selectionBar}>
+            <span className={styles.selectionCount}>
+              {t('selectedConversations', { count: selected.length })}
+            </span>
+            <IconButton
+              className={styles.sectionAction}
+              size="xs"
+              icon={<IconCloseOutline16 />}
+              aria-label={t('close')}
+              onClick={() => {
+                setSelectMode(false)
+                setSelected([])
+              }}
+            />
+          </div>
+        ) : (
+          <div className={styles.search}>
+            <span className={styles.searchIcon}>
+              <IconSearchOutline16 />
+            </span>
+            <input
+              className={styles.searchInput}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t('searchConversations')}
+              aria-label={t('searchConversations')}
+            />
+          </div>
+        )
       ) : null}
       <button
         type="button"
@@ -157,20 +180,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
           {visibleGroups.map((group) => (
             <div key={group.key} className={styles.section}>
               <div className={styles.sectionHeader}>
-                <span>
-                  {selectMode
-                    ? t('selectedConversations', { count: selected.length })
-                    : group.label}
-                </span>
-                {mobile ? (
-                  <IconButton
-                    className={styles.sectionAction}
-                    size="xs"
-                    icon={<IconSelectListOutline14 />}
-                    aria-label={t('selectConversations')}
-                    onClick={() => setSelectMode((value) => !value)}
-                  />
-                ) : null}
+                <span>{group.label}</span>
               </div>
               {group.sessions.map((session) => (
                 <SessionItem
@@ -202,6 +212,15 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
         {mobile ? null : (
           <ScrollBar containerRef={listRef} className={styles.scrollBar} size={8} inset={8} />
         )}
+        {mobile && !selectMode ? (
+          <IconButton
+            className={styles.selectEntry}
+            size="xs"
+            icon={<IconSelectListOutline14 />}
+            aria-label={t('selectConversations')}
+            onClick={() => setSelectMode(true)}
+          />
+        ) : null}
       </div>
       <div className={styles.bottom}>
         <button type="button" className={styles.settings} onClick={() => openSettings('general')}>

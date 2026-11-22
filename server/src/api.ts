@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { API_KEY_REF, type CredentialStore } from './credentials.ts'
 import { homeDisplay } from './home.ts'
-import { assertValidId, type SessionEnvelope, type Storage } from './storage.ts'
+import type { Storage } from './storage.ts'
 import type { SessionService } from './session-events.ts'
 import { createSessionRoutes } from './session-routes.ts'
 
@@ -168,95 +168,14 @@ export const createApi =
     }
 
     if (path === '/api/sessions/replace' && method === 'POST') {
-      const body = (await readJsonBody(req)) as { clear?: unknown; sessions?: unknown } | undefined
-      const entries = body?.sessions
-      if (!Array.isArray(entries)) {
-        sendJson(res, 400, { error: 'sessions must be an array' })
-        return
-      }
-      if (entries.length === 0 && body?.clear !== true) {
-        sendJson(res, 400, { error: 'refusing to clear history without an explicit request' })
-        return
-      }
-      const updatedAt = new Date().toISOString()
-      const items: { id: string; envelope: SessionEnvelope }[] = []
-      for (const entry of entries) {
-        const record = (entry ?? {}) as {
-          id?: unknown
-          schemaVersion?: unknown
-          session?: unknown
-          summary?: unknown
-        }
-        const session = record.session as { id?: unknown } | undefined
-        const id =
-          typeof record.id === 'string'
-            ? record.id
-            : typeof session?.id === 'string'
-              ? session.id
-              : undefined
-        if (id === undefined) {
-          sendJson(res, 400, { error: 'every session entry needs an id' })
-          return
-        }
-        try {
-          assertValidId(id)
-        } catch {
-          sendJson(res, 400, { error: `invalid session id: ${id}` })
-          return
-        }
-        items.push({
-          id,
-          envelope: {
-            schemaVersion: typeof record.schemaVersion === 'number' ? record.schemaVersion : 1,
-            session: record.session,
-            summary: record.summary,
-            updatedAt,
-          },
-        })
-      }
-      await storage.replaceSessions(items)
-      sendJson(res, 200, {
-        sessions: items.map((item) => ({
-          id: item.id,
-          summary: item.envelope.summary,
-          updatedAt: item.envelope.updatedAt,
-        })),
-      })
+      await createSessionRoutes(options.sessions).replace(req, res)
       return
     }
 
-    if (path.startsWith('/api/sessions/')) {
+    if (path.startsWith('/api/sessions/') && method === 'GET') {
       const id = decodeURIComponent(path.slice('/api/sessions/'.length))
-      if (method === 'GET') {
-        const envelope = await storage.readSession(id)
-        if (!envelope) {
-          sendJson(res, 404, { error: 'session not found' })
-          return
-        }
-        sendJson(res, 200, envelope)
-        return
-      }
-      if (method === 'PUT') {
-        const body = (await readJsonBody(req)) as Partial<SessionEnvelope> | undefined
-        if (!body || typeof body !== 'object') {
-          sendJson(res, 400, { error: 'invalid session document' })
-          return
-        }
-        const envelope: SessionEnvelope = {
-          schemaVersion: typeof body.schemaVersion === 'number' ? body.schemaVersion : 1,
-          session: body.session,
-          summary: body.summary,
-          updatedAt: new Date().toISOString(),
-        }
-        await storage.writeSession(id, envelope)
-        sendJson(res, 200, envelope)
-        return
-      }
-      if (method === 'DELETE') {
-        await storage.deleteSession(id)
-        sendJson(res, 200, { ok: true })
-        return
-      }
+      await createSessionRoutes(options.sessions).readSession(req, res, id)
+      return
     }
 
     if (path === '/api/files' && method === 'POST') {

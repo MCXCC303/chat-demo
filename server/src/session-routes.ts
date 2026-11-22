@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { SessionCommand } from '../../src/services/session/types.js'
 import type { SessionEvent } from '../../src/services/session/types.js'
+import type { LegacySessionEnvelope } from './commands.js'
 import type { SessionService } from './session-events.js'
 
 const HEARTBEAT_INTERVAL = 15000
@@ -52,6 +53,8 @@ export type SessionRoutes = {
   ) => Promise<void>
   commands: (req: IncomingMessage, res: ServerResponse, sessionId: string) => Promise<void>
   control: (req: IncomingMessage, res: ServerResponse) => Promise<void>
+  readSession: (req: IncomingMessage, res: ServerResponse, sessionId: string) => Promise<void>
+  replace: (req: IncomingMessage, res: ServerResponse) => Promise<void>
 }
 
 export const createSessionRoutes = (service: SessionService): SessionRoutes => ({
@@ -107,6 +110,62 @@ export const createSessionRoutes = (service: SessionService): SessionRoutes => (
     }
     const accepted = await service.handle(sessionId, command)
     sendJson(res, 200, { accepted })
+  },
+
+  async readSession(_req, res, sessionId) {
+    const envelope = await service.readSession(sessionId)
+    if (!envelope) {
+      sendJson(res, 404, { error: 'session not found' })
+      return
+    }
+    sendJson(res, 200, envelope)
+  },
+
+  async replace(req, res) {
+    const text = await readBody(req)
+    let body: { clear?: unknown; sessions?: unknown }
+    try {
+      body = JSON.parse(text) as { clear?: unknown; sessions?: unknown }
+    } catch {
+      sendJson(res, 400, { error: 'invalid body' })
+      return
+    }
+    const entries = body.sessions
+    if (!Array.isArray(entries)) {
+      sendJson(res, 400, { error: 'sessions must be an array' })
+      return
+    }
+    if (entries.length === 0 && body.clear !== true) {
+      sendJson(res, 400, { error: 'refusing to clear history without an explicit request' })
+      return
+    }
+    const items: LegacySessionEnvelope[] = []
+    for (const entry of entries) {
+      const record = (entry ?? {}) as {
+        id?: unknown
+        schemaVersion?: unknown
+        session?: unknown
+        summary?: unknown
+      }
+      const session = record.session as { id?: unknown } | undefined
+      const id =
+        typeof record.id === 'string'
+          ? record.id
+          : typeof session?.id === 'string'
+            ? session.id
+            : undefined
+      if (id === undefined) {
+        sendJson(res, 400, { error: 'every session entry needs an id' })
+        return
+      }
+      items.push({
+        id,
+        schemaVersion: typeof record.schemaVersion === 'number' ? record.schemaVersion : 1,
+        session: (record.session ?? {}) as LegacySessionEnvelope['session'],
+        summary: record.summary,
+      })
+    }
+    sendJson(res, 200, { sessions: await service.importSessions(items) })
   },
 
   async control(_req, res) {

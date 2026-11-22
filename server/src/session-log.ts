@@ -3,9 +3,9 @@ import type { Dirent } from 'node:fs'
 import { join } from 'node:path'
 import type { SessionSummary } from '../../src/services/chat/types.ts'
 import type { SessionEvent, SessionEventType } from '../../src/services/session/types.ts'
-import { withLock } from './atomic.ts'
+import { withLock, writeFileAtomic } from './atomic.ts'
 import { homePath } from './home.ts'
-import { isSessionEvent, type SessionLog } from './session-events.ts'
+import { isSessionEvent, type PendingEvent, type SessionLog } from './session-events.ts'
 import { SessionIndex, type SessionIndexRecord } from './session-index.ts'
 import { assertValidId } from './storage.ts'
 
@@ -144,6 +144,22 @@ export class SessionLogStore implements SessionLog {
     }
     await this.index.save()
     return this.index.list().sort((left, right) => right.updatedAt - left.updatedAt)
+  }
+
+  async writeSession(sessionId: string, events: PendingEvent[]): Promise<void> {
+    const id = assertSessionId(sessionId)
+    const path = this.logPath(id)
+    const lines = events.map((event, index) =>
+      JSON.stringify({ seq: index + 1, type: event.type, payload: event.payload })
+    )
+    await withLock(path, async () => {
+      await mkdir(this.sessionDir(id), { recursive: true, mode: 0o700 })
+      await writeFileAtomic(path, lines.length === 0 ? '' : lines.join('\n') + '\n', 0o600)
+      const meta = events.find((event) => event.type === 'session/meta')
+      if (meta) {
+        await this.applyMeta(id, meta.payload)
+      }
+    })
   }
 
   async deleteSession(sessionId: string): Promise<void> {

@@ -11,6 +11,7 @@ import type {
   TurnStatePayload,
 } from '../../src/services/session/types.js'
 import type { SessionSummary } from '../../src/services/chat/types.js'
+import type { LegacySessionEnvelope } from './commands.ts'
 
 export interface SessionLog {
   append(sessionId: string, type: SessionEventType, payload: unknown): Promise<number>
@@ -18,6 +19,13 @@ export interface SessionLog {
   readFrom(sessionId: string, after: number): Promise<SessionEvent[]>
   subscribe(sessionId: string, listener: (event: SessionEvent) => void): () => void
   listSessions(): Promise<SessionSummary[]>
+  writeSession(sessionId: string, events: PendingEvent[]): Promise<void>
+  deleteSession(sessionId: string): Promise<void>
+}
+
+export type PendingEvent = {
+  type: SessionEventType
+  payload: unknown
 }
 
 export type SessionEventPayloads = {
@@ -42,7 +50,11 @@ export interface SessionService {
   handle(sessionId: string, command: SessionCommand): Promise<number[]>
   readFrom(sessionId: string, after: number): Promise<SessionEvent[]>
   subscribe(sessionId: string, listener: (event: SessionEvent) => void): () => void
-  subscribeControl(listener: (frame: { seq: number; type: string; payload: unknown }) => void): () => void
+  subscribeControl(
+    listener: (frame: { seq: number; type: string; payload: unknown }) => void
+  ): () => void
+  readSession(sessionId: string): Promise<LegacySessionEnvelope | undefined>
+  importSessions(items: LegacySessionEnvelope[]): Promise<SessionSummary[]>
 }
 
 export const isSessionEvent = (value: unknown): value is SessionEvent => {

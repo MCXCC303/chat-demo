@@ -352,12 +352,12 @@
   background-color: rgba(44, 44, 44, 0.48);
   opacity: 0;
   pointer-events: none;
+  transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .drawerMaskActive {
   opacity: 1;
   pointer-events: auto;
-  transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .drawerMaskDragging {

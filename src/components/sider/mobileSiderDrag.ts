@@ -26,6 +26,7 @@ const paint = () => {
     targets.drawer.style.transform = `translateX(${next.offset - next.width}px)`
   }
   if (targets.mask) {
+    targets.mask.style.transition = 'none'
     targets.mask.style.opacity = String(next.progress)
   }
   if (targets.main) {
@@ -48,6 +49,7 @@ export const clearSiderOffset = () => {
     if (element) {
       element.style.removeProperty('transform')
       element.style.removeProperty('opacity')
+      element.style.removeProperty('transition')
     }
   }
 }

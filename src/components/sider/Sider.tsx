@@ -21,8 +21,10 @@ import { Modal } from '../base/Modal.js'
 import { showToast } from '../base/toastState.js'
 import { openSettings } from '../settings/settingsDialogState.js'
 import { ScrollBar } from '../base/ScrollBar.js'
+import { setSiderDragTarget } from './mobileSiderDrag.js'
 import { closeMobileSider, useMobileSider } from './mobileSiderState.js'
 import { SessionItem } from './SessionItem.js'
+import { useVirtualSessions } from './virtualSessions.js'
 import styles from './Sider.module.css'
 
 const TOP_FADE_DISTANCE = 20
@@ -62,6 +64,9 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
       }))
       .filter((group) => group.sessions.length > 0)
   }, [groups, query])
+
+  const counts = useMemo(() => visibleGroups.map((group) => group.sessions.length), [visibleGroups])
+  const { metrics, ranges } = useVirtualSessions(listRef, counts)
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>
@@ -108,9 +113,6 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
     update()
     const resizeObserver = new ResizeObserver(schedule)
     resizeObserver.observe(list)
-    for (const child of list.children) {
-      resizeObserver.observe(child)
-    }
     list.addEventListener('scroll', schedule, { passive: true })
     return () => {
       resizeObserver.disconnect()
@@ -185,38 +187,45 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
       </button>
       <div className={styles.listWrap}>
         <div className={styles.list} ref={listRef}>
-          {visibleGroups.map((group) => (
-            <div key={group.key} className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <span>{group.label}</span>
+          {visibleGroups.map((group, index) => {
+            const range = ranges[index] ?? { start: 0, end: group.sessions.length }
+            const head = range.start * metrics.itemHeight
+            const tail = (group.sessions.length - range.end) * metrics.itemHeight
+            return (
+              <div key={group.key} className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <span>{group.label}</span>
+                </div>
+                {head > 0 ? <div style={{ height: head }} aria-hidden /> : null}
+                {group.sessions.slice(range.start, range.end).map((session) => (
+                  <SessionItem
+                    key={session.id}
+                    session={session}
+                    active={session.id === activeId}
+                    onDelete={() => setDeleting(session)}
+                    allowSelect={mobile}
+                    selectMode={selectMode}
+                    selected={selected.includes(session.id)}
+                    onToggleSelect={() =>
+                      setSelected((prev) =>
+                        prev.includes(session.id)
+                          ? prev.filter((id) => id !== session.id)
+                          : [...prev, session.id]
+                      )
+                    }
+                    onEnterSelectMode={() => {
+                      setSelectMode(true)
+                      setSelected((prev) =>
+                        prev.includes(session.id) ? prev : [...prev, session.id]
+                      )
+                    }}
+                    onTogglePin={() => setSessionPinned(session.id, !session.pinned)}
+                  />
+                ))}
+                {tail > 0 ? <div style={{ height: tail }} aria-hidden /> : null}
               </div>
-              {group.sessions.map((session) => (
-                <SessionItem
-                  key={session.id}
-                  session={session}
-                  active={session.id === activeId}
-                  onDelete={() => setDeleting(session)}
-                  allowSelect={mobile}
-                  selectMode={selectMode}
-                  selected={selected.includes(session.id)}
-                  onToggleSelect={() =>
-                    setSelected((prev) =>
-                      prev.includes(session.id)
-                        ? prev.filter((id) => id !== session.id)
-                        : [...prev, session.id]
-                    )
-                  }
-                  onEnterSelectMode={() => {
-                    setSelectMode(true)
-                    setSelected((prev) =>
-                      prev.includes(session.id) ? prev : [...prev, session.id]
-                    )
-                  }}
-                  onTogglePin={() => setSessionPinned(session.id, !session.pinned)}
-                />
-              ))}
-            </div>
-          ))}
+            )
+          })}
         </div>
         {mobile ? null : (
           <ScrollBar containerRef={listRef} className={styles.scrollBar} size={8} inset={8} />
@@ -284,9 +293,18 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
 export const MobileSider = () => {
   const open = useMobileSider((state) => state.open)
   const dragging = useMobileSider((state) => state.dragging)
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const maskRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setSiderDragTarget('drawer', drawerRef.current)
+    setSiderDragTarget('mask', maskRef.current)
+  }, [])
+
   return (
     <>
       <div
+        ref={maskRef}
         className={
           styles.drawerMask +
           (open ? ' ' + styles.drawerMaskActive : '') +
@@ -295,6 +313,7 @@ export const MobileSider = () => {
         onClick={closeMobileSider}
       />
       <div
+        ref={drawerRef}
         className={
           styles.drawer +
           (open ? ' ' + styles.drawerOpen : '') +

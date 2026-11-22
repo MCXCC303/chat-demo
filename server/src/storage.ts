@@ -41,7 +41,7 @@ export class Storage {
   }
 
   get sessionsDir(): string {
-    return homePath(this.home, 'data', 'sessions')
+    return homePath(this.home, 'data', 'documents')
   }
 
   get filesDir(): string {

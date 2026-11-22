@@ -39,7 +39,7 @@ const main = async () => {
         break
       }
     } catch {
-      continue
+      backendUrl = ''
     }
     await sleep(100)
   }

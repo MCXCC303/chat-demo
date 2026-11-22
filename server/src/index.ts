@@ -19,11 +19,13 @@ import {
   tokenMatches,
   verifySessionCookie,
 } from './session.ts'
+import { SessionLogStore } from './session-log.ts'
+import { createSessionService } from './session-service.ts'
 import { Storage } from './storage.ts'
 import { assertTrustedAuthority, isLoopbackHost, isTrustedRequest } from './trust.ts'
 
-const VERSION = '0.1.0'
-const LABEL = 'chat-demo'
+const VERSION = '0.2.0'
+const LABEL = 'deepseek-web'
 const DEFAULT_PORT = 8090
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_UPSTREAM = 'https://api.deepseek.com'
@@ -202,9 +204,16 @@ const main = async () => {
   const storage = new Storage(home)
   await storage.recover()
   const credentials = new CredentialStore(home)
+  const sessions = createSessionService({
+    log: new SessionLogStore({ home }),
+    upstream: options.upstream,
+    credentials,
+    storage,
+  })
   const api = createApi({
     storage,
     credentials,
+    sessions,
     home,
     version: VERSION,
     upstream: options.upstream,

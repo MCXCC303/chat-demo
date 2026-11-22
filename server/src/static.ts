@@ -64,6 +64,6 @@ export const createStatic =
       await sendFile(res, join(rootPath, 'index.html'), 200)
     } catch {
       res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' })
-      res.end('the frontend bundle is missing; run pnpm build:server first')
+      res.end('the frontend bundle is missing; run pnpm build first')
     }
   }

@@ -1,0 +1,24 @@
+{
+  "scenario": "search",
+  "title": "开启智能搜索",
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/anthropic/v1/messages",
+      "headers": {
+        "host": "<upstream>",
+        "connection": "keep-alive",
+        "x-api-key": "<redacted>",
+        "authorization": "<redacted>",
+        "content-type": "application/json",
+        "accept": "text/event-stream",
+        "accept-language": "*",
+        "sec-fetch-mode": "cors",
+        "user-agent": "node",
+        "accept-encoding": "gzip, deflate",
+        "content-length": "456"
+      },
+      "body": "{\"model\":\"deepseek-flash\",\"system\":\"该助手为DeepSeek，由深度求索公司创造。\",\"messages\":[{\"role\":\"latest_reminder\",\"content\":\"<date>,,Web,中文\"},{\"role\":\"user\",\"content\":\"golden-e2e 智能搜索\"}],\"thinking\":{\"type\":\"disabled\"},\"safety_check\":{\"level\":\"high\"},\"tools\":[{\"type\":\"deepseek_read_url\",\"name\":\"deepseek_read_url\"},{\"type\":\"deepseek_web_search\",\"name\":\"deepseek_web_search\"}],\"title\":{\"enabled\":true},\"stream\":true}"
+    }
+  ]
+}

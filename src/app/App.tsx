@@ -11,7 +11,6 @@ import {
   useChatStore,
 } from '../services/chat/store.js'
 import { httpRepository } from '../services/chat/httpRepository.js'
-import { migrateToServer } from '../services/chat/migrate.js'
 import { setRepository } from '../services/chat/repository.js'
 import { SearchPanel } from '../components/search/SearchPanel.js'
 import { closeSearchPanel } from '../components/search/searchPanelState.js'
@@ -96,7 +95,6 @@ export const App = () => {
       if (useBackend.getState().mode === 'server') {
         setRepository(httpRepository)
         await loadSharedSettings()
-        await migrateToServer().catch(() => 0)
       }
       await initChat()
       // 首次打开先在设置里输入 API Key

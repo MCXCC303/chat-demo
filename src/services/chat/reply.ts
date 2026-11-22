@@ -31,7 +31,7 @@ const toFileBlocks = (files: FileAttachment[]): FileBlockParam[] =>
       : []
   )
 
-const toReplyBlock = (block: OutputBlockStart, now: number): ReplyBlock | null => {
+export const toReplyBlock = (block: OutputBlockStart, now: number): ReplyBlock | null => {
   switch (block.type) {
     case 'text':
       return { type: 'text', text: block.text, citations: block.citations ?? [] }
@@ -185,8 +185,7 @@ export const canContinueReply = (reply: AssistantMessage): boolean => {
     return false
   }
   return (
-    reply.status === 'stopped' ||
-    (reply.status === 'done' && reply.stopReason === 'max_tokens')
+    reply.status === 'stopped' || (reply.status === 'done' && reply.stopReason === 'max_tokens')
   )
 }
 

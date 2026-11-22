@@ -25,6 +25,7 @@ export const en = {
   untitledChat: 'New chat',
   sessionLoading: 'Loading chats...',
   sessionListLoadFailed: 'Unable to load the chat list. Please try again.',
+  sessionLoadMoreOnError: 'Failed to load. Scroll to retry.',
   sessionLoadFailed: 'Unable to load this chat. Please try again.',
   sessionSaveFailed:
     'Chats or attachments have not been saved locally. Retry before closing this page.',

@@ -12,7 +12,12 @@ import {
 import { setSiderCollapsed } from '../../services/settings.js'
 import { groupSessions } from '../../services/chat/sessionGroups.js'
 import { setSessionPinned } from '../../services/chat/store.js'
-import { newChat, removeSession, useChatStore } from '../../services/chat/store.js'
+import {
+  loadMoreSessions,
+  newChat,
+  removeSession,
+  useChatStore,
+} from '../../services/chat/store.js'
 import type { SessionSummary } from '../../services/chat/types.js'
 import { Button } from '../base/Button.js'
 import { IconButton } from '../base/IconButton.js'
@@ -49,8 +54,15 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
     setSelectMode(false)
     setSelected([])
   }, [mobile])
+  const hasMore = useChatStore((state) => state.hasMore)
+  const loadingMore = useChatStore((state) => state.loadingMore)
+  const loadMoreError = useChatStore((state) => state.loadMoreError)
   const counts = useMemo(() => groups.map((group) => group.sessions.length), [groups])
-  const { metrics, ranges } = useVirtualSessions(listRef, counts)
+  const { metrics, ranges } = useVirtualSessions(
+    listRef,
+    counts,
+    hasMore ? loadMoreSessions : undefined
+  )
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>
@@ -195,6 +207,19 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
               </div>
             )
           })}
+          {loadingMore ? (
+            <>
+              <div className={styles.loadingRow}>
+                <span className={styles.loadingBar} />
+              </div>
+              <div className={styles.loadingRow}>
+                <span className={clsx(styles.loadingBar, styles.loadingBarShort)} />
+              </div>
+            </>
+          ) : null}
+          {loadMoreError ? (
+            <div className={styles.loadMoreError}>{t('sessionLoadMoreOnError')}</div>
+          ) : null}
         </div>
         {mobile ? null : (
           <ScrollBar containerRef={listRef} className={styles.scrollBar} size={8} inset={8} />

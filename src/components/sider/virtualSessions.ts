@@ -17,6 +17,7 @@ const FALLBACK: ListMetrics = {
 }
 
 const OVERSCAN = 320
+const REACH_END_MARGIN = 240
 const INITIAL_VISIBLE = 20
 
 const readToken = (styles: CSSStyleDeclaration, name: string, fallback: number): number => {
@@ -68,12 +69,15 @@ const sameRanges = (left: ItemRange[], right: ItemRange[]): boolean =>
 
 export const useVirtualSessions = (
   containerRef: RefObject<HTMLDivElement | null>,
-  counts: number[]
+  counts: number[],
+  onReachEnd?: () => void
 ) => {
   const [metrics, setMetrics] = useState<ListMetrics>(FALLBACK)
   const [ranges, setRanges] = useState<ItemRange[]>([])
   const countsRef = useRef(counts)
   countsRef.current = counts
+  const reachEndRef = useRef(onReachEnd)
+  reachEndRef.current = onReachEnd
   const countsKey = counts.join(',')
 
   const compute = useCallback(() => {
@@ -88,6 +92,12 @@ export const useVirtualSessions = (
       visibleRange(tops[index], count, metrics, list.scrollTop, list.clientHeight)
     )
     setRanges((previous) => (sameRanges(previous, next) ? previous : next))
+    if (
+      reachEndRef.current &&
+      list.scrollTop + list.clientHeight >= list.scrollHeight - REACH_END_MARGIN
+    ) {
+      reachEndRef.current()
+    }
   }, [containerRef, metrics])
 
   useEffect(() => {

@@ -5,7 +5,6 @@ import { DeepSeekWordmark } from '../base/BrandLogo.js'
 import {
   IconCloseOutline16,
   IconPanelLeftOutline16,
-  IconSearchOutline16,
   IconSelectListOutline14,
   IconSettingsOutline16,
   NewChatIcon,
@@ -38,7 +37,6 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const groups = useMemo(() => groupSessions(sessions, now, t), [sessions, now, t])
   const [deleting, setDeleting] = useState<SessionSummary | null>(null)
   const [deletePending, setDeletePending] = useState(false)
-  const [query, setQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
 
@@ -51,21 +49,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
     setSelectMode(false)
     setSelected([])
   }, [mobile])
-
-  const visibleGroups = useMemo(() => {
-    const keyword = query.trim().toLowerCase()
-    if (!keyword) {
-      return groups
-    }
-    return groups
-      .map((group) => ({
-        ...group,
-        sessions: group.sessions.filter((session) => session.title.toLowerCase().includes(keyword)),
-      }))
-      .filter((group) => group.sessions.length > 0)
-  }, [groups, query])
-
-  const counts = useMemo(() => visibleGroups.map((group) => group.sessions.length), [visibleGroups])
+  const counts = useMemo(() => groups.map((group) => group.sessions.length), [groups])
   const { metrics, ranges } = useVirtualSessions(listRef, counts)
 
   useEffect(() => {
@@ -121,7 +105,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
         cancelAnimationFrame(frame)
       }
     }
-  }, [visibleGroups])
+  }, [groups])
 
   return (
     <div
@@ -140,37 +124,22 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
           onClick={() => (mobile ? closeMobileSider() : setSiderCollapsed(true))}
         />
       </div>
-      {mobile ? (
-        selectMode ? (
-          <div className={styles.selectionBar}>
-            <span className={styles.selectionCount}>
-              {t('selectedConversations', { count: selected.length })}
-            </span>
-            <IconButton
-              className={styles.sectionAction}
-              size="xs"
-              icon={<IconCloseOutline16 />}
-              aria-label={t('close')}
-              onClick={() => {
-                setSelectMode(false)
-                setSelected([])
-              }}
-            />
-          </div>
-        ) : (
-          <div className={styles.search}>
-            <span className={styles.searchIcon}>
-              <IconSearchOutline16 />
-            </span>
-            <input
-              className={styles.searchInput}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t('searchConversations')}
-              aria-label={t('searchConversations')}
-            />
-          </div>
-        )
+      {mobile && selectMode ? (
+        <div className={styles.selectionBar}>
+          <span className={styles.selectionCount}>
+            {t('selectedConversations', { count: selected.length })}
+          </span>
+          <IconButton
+            className={styles.sectionAction}
+            size="xs"
+            icon={<IconCloseOutline16 />}
+            aria-label={t('close')}
+            onClick={() => {
+              setSelectMode(false)
+              setSelected([])
+            }}
+          />
+        </div>
       ) : null}
       <button
         type="button"
@@ -187,7 +156,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
       </button>
       <div className={styles.listWrap}>
         <div className={styles.list} ref={listRef}>
-          {visibleGroups.map((group, index) => {
+          {groups.map((group, index) => {
             const range = ranges[index] ?? { start: 0, end: group.sessions.length }
             const head = range.start * metrics.itemHeight
             const tail = (group.sessions.length - range.end) * metrics.itemHeight

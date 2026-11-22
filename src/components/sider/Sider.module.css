@@ -86,40 +86,6 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
-.search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-sizing: border-box;
-  height: 44px;
-  margin: 14px 15px 0;
-  padding: 0 12px;
-  border-radius: 22px;
-  background-color: var(--dsw-specific-search-fill);
-}
-
-.searchIcon {
-  display: flex;
-  flex-shrink: 0;
-  color: var(--dsw-alias-label-tertiary);
-}
-
-.searchInput {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: none;
-  color: var(--dsw-alias-label-primary);
-  font: inherit;
-  font-size: 15px;
-  line-height: 20px;
-
-  &::placeholder {
-    color: var(--dsw-alias-label-tertiary);
-  }
-}
-
 .listWrap {
   position: relative;
   flex: 1;
@@ -221,12 +187,6 @@
 @media not all and (min-width: 768px) {
   .listWrap {
     margin-top: 14px;
-  }
-
-  .search {
-    height: 40px;
-    margin: 10px 12px 0;
-    border-radius: 20px;
   }
 
   .sectionHeader {

@@ -5,9 +5,6 @@ declare const styles: {
   readonly newChat: string
   readonly newChatIcon: string
   readonly selectEntry: string
-  readonly search: string
-  readonly searchIcon: string
-  readonly searchInput: string
   readonly listWrap: string
   readonly list: string
   readonly section: string

@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-server/
 build/
 .pnpm-store/
 .cache/

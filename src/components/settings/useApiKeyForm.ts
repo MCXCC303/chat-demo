@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { ApiError, verifyApiKey } from '../../services/api/client.js'
 import { classifyApiError } from '../../services/api/errors.js'
+import { checkCredential, saveCredential, useBackend } from '../../services/backend.js'
 import { setApiKey } from '../../services/settings.js'
 import { useTranslate } from '../../i18n/index.js'
 
-/** 输入 API Key 后先用 GET /models 校验，通过才保存 */
+/** 输入 API Key 后先校验，通过才保存；本机服务托管时由服务端校验并保存 */
 export const useApiKeyForm = (onSaved?: () => void) => {
   const t = useTranslate()
   const [value, setValue] = useState('')
@@ -35,8 +36,16 @@ export const useApiKeyForm = (onSaved?: () => void) => {
     setVerifying(true)
     setFailure(null)
     try {
-      await verifyApiKey(apiKey)
-      setApiKey(apiKey)
+      if (useBackend.getState().mode === 'server') {
+        const result = await checkCredential(apiKey)
+        if (!result.ok) {
+          throw new ApiError('http', result.message || t('apiKeyInvalid'), result.status || 401)
+        }
+        await saveCredential(apiKey)
+      } else {
+        await verifyApiKey(apiKey)
+        setApiKey(apiKey)
+      }
       setValue('')
       onSaved?.()
     } catch (e) {

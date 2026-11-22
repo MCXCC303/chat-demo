@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { TtsVoice } from './api/speech.js'
+import { useBackend } from './backend.js'
 import { normalizeLocation, type UserLocation } from './location.js'
 
 export type Locale = 'zh-CN' | 'en-US'
@@ -18,6 +19,12 @@ type Settings = {
   search: boolean
   siderCollapsed: boolean
 }
+
+/** 由本机服务托管的偏好：与设备无关，多台设备共用一份 */
+type SharedSettings = Pick<
+  Settings,
+  'locale' | 'themePreference' | 'location' | 'ttsVoice' | 'thinking' | 'search'
+>
 
 const KEYS = {
   apiKey: 'chat-demo:api-key',
@@ -98,25 +105,95 @@ export const useSettings = create<Settings>(() => ({
   siderCollapsed: read(KEYS.siderCollapsed) === 'true',
 }))
 
+const isServerMode = (): boolean => useBackend.getState().mode === 'server'
+
+const sharedPayload = (): SharedSettings => {
+  const state = useSettings.getState()
+  return {
+    locale: state.locale,
+    themePreference: state.themePreference,
+    location: state.location,
+    ttsVoice: state.ttsVoice,
+    thinking: state.thinking,
+    search: state.search,
+  }
+}
+
+/** 把共享偏好写回本机服务；本机服务不可用时静默忽略，界面仍按当前值工作。 */
+const syncShared = () => {
+  if (!isServerMode()) {
+    return
+  }
+  void fetch('/api/settings', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(sharedPayload()),
+  }).catch(() => {})
+}
+
+/** 读取本机服务保存的共享偏好；没有记录时保留本地偏好。 */
+export const loadSharedSettings = async (): Promise<void> => {
+  if (!isServerMode()) {
+    return
+  }
+  try {
+    const response = await fetch('/api/settings', { cache: 'no-store' })
+    if (!response.ok) {
+      return
+    }
+    const saved = (await response.json()) as Partial<SharedSettings>
+    const next: Partial<Settings> = {}
+    if (saved.locale === 'zh-CN' || saved.locale === 'en-US') {
+      next.locale = saved.locale
+    }
+    if (
+      saved.themePreference === 'light' ||
+      saved.themePreference === 'dark' ||
+      saved.themePreference === 'system'
+    ) {
+      next.themePreference = saved.themePreference
+    }
+    if (saved.ttsVoice === 'stella' || saved.ttsVoice === 'tide') {
+      next.ttsVoice = saved.ttsVoice
+    }
+    if (typeof saved.thinking === 'boolean') {
+      next.thinking = saved.thinking
+    }
+    if (typeof saved.search === 'boolean') {
+      next.search = saved.search
+    }
+    if (saved.location !== undefined) {
+      next.location = normalizeLocation(saved.location)
+    }
+    useSettings.setState(next)
+  } catch {
+    // 本机服务不可用时保留本地偏好
+  }
+}
+
 export const setLocale = (locale: Locale) => {
   write(KEYS.locale, locale)
   useSettings.setState({ locale })
+  syncShared()
 }
 
 export const setLocation = (value: UserLocation | null) => {
   const location = normalizeLocation(value)
   write(KEYS.location, location ? JSON.stringify(location) : null)
   useSettings.setState({ location })
+  syncShared()
 }
 
 export const setThemePreference = (themePreference: ThemePreference) => {
   write(KEYS.themePreference, themePreference)
   useSettings.setState({ themePreference })
+  syncShared()
 }
 
 export const setTtsVoice = (ttsVoice: TtsVoice) => {
   write(KEYS.ttsVoice, ttsVoice)
   useSettings.setState({ ttsVoice })
+  syncShared()
 }
 
 export const setApiKey = (apiKey: string | null) => {
@@ -127,11 +204,13 @@ export const setApiKey = (apiKey: string | null) => {
 export const setThinking = (thinking: boolean) => {
   write(KEYS.thinking, String(thinking))
   useSettings.setState({ thinking })
+  syncShared()
 }
 
 export const setSearch = (search: boolean) => {
   write(KEYS.search, String(search))
   useSettings.setState({ search })
+  syncShared()
 }
 
 export const setSiderCollapsed = (siderCollapsed: boolean) => {

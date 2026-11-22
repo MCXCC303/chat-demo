@@ -8,8 +8,11 @@
   "scripts": {
     "dev": "rspack serve -c rspack.config.ts",
     "build": "rm -rf dist && NODE_ENV=production rspack build -c rspack.config.ts",
+    "build:server": "rm -rf dist-server && NODE_ENV=production rspack build -c rspack.server.config.ts",
+    "server": "node server/src/index.ts",
+    "dev:all": "node server/src/dev.ts",
     "type": "tsc -p tsconfig.json",
-    "lint": "oxlint src rspack.config.ts",
+    "lint": "oxlint src server rspack.config.ts rspack.server.config.ts",
     "format": "oxfmt --write ."
   },
   "dependencies": {

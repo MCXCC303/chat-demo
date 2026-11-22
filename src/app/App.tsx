@@ -1,6 +1,7 @@
 import { useEffect, type CSSProperties } from 'react'
 import { useTranslate } from '../i18n/index.js'
-import { useSettings } from '../services/settings.js'
+import { detectBackend, useBackend } from '../services/backend.js'
+import { useSettings, loadSharedSettings } from '../services/settings.js'
 import { useIsMobile, useMobileViewport, usePreventPageScroll } from './viewport.js'
 import {
   bindChatPersistence,
@@ -9,6 +10,9 @@ import {
   selectSession,
   useChatStore,
 } from '../services/chat/store.js'
+import { httpRepository } from '../services/chat/httpRepository.js'
+import { migrateToServer } from '../services/chat/migrate.js'
+import { setRepository } from '../services/chat/repository.js'
 import { SearchPanel } from '../components/search/SearchPanel.js'
 import { closeSearchPanel } from '../components/search/searchPanelState.js'
 import { SessionView } from '../components/session/SessionView.js'
@@ -86,9 +90,18 @@ export const App = () => {
   useEffect(closeMobileSider, [activeId, isMobile])
 
   useEffect(() => {
-    void initChat()
-    // 首次打开先在设置里输入 API Key
-    ensureApiKey()
+    void (async () => {
+      await detectBackend()
+      if (useBackend.getState().mode === 'server') {
+        setRepository(httpRepository)
+        await loadSharedSettings()
+        // 浏览器里已有的记录搬进本机服务，服务端已有记录时不动
+        await migrateToServer().catch(() => 0)
+      }
+      await initChat()
+      // 首次打开先在设置里输入 API Key
+      ensureApiKey()
+    })()
   }, [])
 
   return (

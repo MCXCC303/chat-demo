@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useBackend } from '../../services/backend.js'
 import { useSettings } from '../../services/settings.js'
 
 /** 设置弹窗的分组：通用设置 / 数据管理 */
@@ -17,6 +18,13 @@ export const closeSettings = () => useSettingsDialog.setState({ open: false })
 
 /** 没有 API Key 时打开设置并选中 API Key 所在的「数据管理」，返回是否已有 Key */
 export const ensureApiKey = () => {
+  if (useBackend.getState().mode === 'server') {
+    if (useBackend.getState().credential?.configured) {
+      return true
+    }
+    openSettings('data')
+    return false
+  }
   if (useSettings.getState().apiKey) {
     return true
   }

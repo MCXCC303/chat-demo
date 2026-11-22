@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { IconEditOutline16 } from '../base/icons.js'
+import { useBackend } from '../../services/backend.js'
 import { useSettings } from '../../services/settings.js'
 import { useIsMobile } from '../../app/viewport.js'
 import { IconButton } from '../base/IconButton.js'
@@ -9,10 +10,14 @@ import styles from './Settings.module.css'
 
 /** API Key 的编辑状态：输入框与移动端底部的「确定」按钮共用 */
 export const useApiKeyEditor = () => {
+  const serverMode = useBackend((state) => state.mode === 'server')
+  const credential = useBackend((state) => state.credential)
   const apiKey = useSettings((state) => state.apiKey)
   const [editing, setEditing] = useState(false)
   const form = useApiKeyForm(() => setEditing(false))
-  return { apiKey, editing, setEditing, form, showInput: !apiKey || editing }
+  const configured = serverMode ? Boolean(credential?.configured) : Boolean(apiKey)
+  const mask = serverMode ? (credential?.masked ?? '') : '*'.repeat(apiKey?.length ?? 0)
+  return { mask, configured, editing, setEditing, form, showInput: !configured || editing }
 }
 
 type ApiKeyEditor = ReturnType<typeof useApiKeyEditor>
@@ -21,15 +26,15 @@ type ApiKeyEditor = ReturnType<typeof useApiKeyEditor>
 export const ApiKeyField = ({ editor }: { editor: ApiKeyEditor }) => {
   const t = useTranslate()
   const isMobile = useIsMobile()
-  const { apiKey, editing, setEditing, form, showInput } = editor
+  const { mask, configured, editing, setEditing, form, showInput } = editor
 
   return (
     <div className={styles.cell}>
       <div className={styles.apiKey}>
         <div className={styles.label}>{t('apiKeyStart')}</div>
-        {apiKey && !editing ? (
+        {configured && !editing ? (
           <div className={styles.apiKeySaved}>
-            <span className={styles.apiKeyMask}>{'*'.repeat(apiKey.length)}</span>
+            <span className={styles.apiKeyMask}>{mask}</span>
             <IconButton
               tone="primary"
               icon={<IconEditOutline16 />}
@@ -55,7 +60,7 @@ export const ApiKeyField = ({ editor }: { editor: ApiKeyEditor }) => {
               }}
               onBlur={() => {
                 // 修改时没输入就离开，回到已保存的状态
-                if (apiKey && !form.value.trim()) {
+                if (configured && !form.value.trim()) {
                   setEditing(false)
                 }
               }}

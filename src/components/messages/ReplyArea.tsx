@@ -79,7 +79,7 @@ export const ReplyArea = memo(function ReplyArea({
 
   useEffect(() => {
     if (wasActive.current && !titleActive) {
-      setMode('hidden')
+      setMode((value) => (value === 'window' ? 'full' : value))
     }
     wasActive.current = titleActive
   }, [titleActive])

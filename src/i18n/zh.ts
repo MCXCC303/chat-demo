@@ -9,7 +9,7 @@ export const zh = {
   welcomeMessageMobile: '你好，我能帮什么忙吗？',
   selectConversations: '选择对话',
   multiSelect: '多选',
-  sessionHistoryTimelineLabelPinned: '固定',
+  sessionHistoryTimelineLabelPinned: '置顶',
   pinConversation: '置顶',
   unpinConversation: '取消置顶',
   selectedConversations: '已选择 {count} 个对话',

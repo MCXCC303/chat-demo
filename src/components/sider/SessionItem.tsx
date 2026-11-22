@@ -6,6 +6,7 @@ import {
   IconCheckOutline16,
   IconEditOutline16,
   IconPushPinOutline16,
+  IconUnpinOutline16,
   IconSelectListOutline14,
   IconEllipsisOutline16,
   IconTrashOutline16,
@@ -26,6 +27,7 @@ export const SessionItem = memo(function SessionItem({
   onToggleSelect,
   onEnterSelectMode,
   onTogglePin,
+  allowSelect,
 }: {
   session: SessionSummary
   active: boolean
@@ -35,6 +37,7 @@ export const SessionItem = memo(function SessionItem({
   onToggleSelect: () => void
   onEnterSelectMode: () => void
   onTogglePin: () => void
+  allowSelect: boolean
 }) {
   const t = useTranslate()
   const [editing, setEditing] = useState(false)
@@ -79,6 +82,9 @@ export const SessionItem = memo(function SessionItem({
           : undefined
       }
       onPointerDown={(event) => {
+        if (event.pointerType === 'mouse') {
+          return
+        }
         const rect = event.currentTarget.getBoundingClientRect()
         setPress({ x: event.clientX - rect.left, y: event.clientY - rect.top })
         longPressed.current = false
@@ -130,15 +136,19 @@ export const SessionItem = memo(function SessionItem({
             {
               key: 'pin',
               label: session.pinned ? t('unpinConversation') : t('pinConversation'),
-              icon: <IconPushPinOutline16 />,
+              icon: session.pinned ? <IconUnpinOutline16 /> : <IconPushPinOutline16 />,
               onSelect: onTogglePin,
             },
-            {
-              key: 'multiSelect',
-              label: t('multiSelect'),
-              icon: <IconSelectListOutline14 />,
-              onSelect: onEnterSelectMode,
-            },
+            ...(allowSelect
+              ? [
+                  {
+                    key: 'multiSelect',
+                    label: t('multiSelect'),
+                    icon: <IconSelectListOutline14 />,
+                    onSelect: onEnterSelectMode,
+                  },
+                ]
+              : []),
             {
               key: 'delete',
               label: t('delete'),

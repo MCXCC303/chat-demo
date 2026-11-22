@@ -79,3 +79,17 @@
     background-color: var(--dsw-alias-border-l2);
   }
 }
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+}
+
+@media not all and (min-width: 768px) {
+  .mobile {
+    transform-origin: top right;
+    animation: menu-in var(--ds-transition-duration) var(--ds-ease-out, ease-out);
+  }
+}

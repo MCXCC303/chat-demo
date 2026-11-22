@@ -79,10 +79,15 @@ export const ReplyArea = memo(function ReplyArea({
 
   useEffect(() => {
     if (wasActive.current && !titleActive) {
+      // 移动端思考结束并开始出正文时收起到摘要行；停止生成时保持展开。
+      if (isMobile && hasResponse) {
+        setMode('hidden')
+        return
+      }
       setMode((value) => (value === 'window' ? 'full' : value))
     }
     wasActive.current = titleActive
-  }, [titleActive])
+  }, [titleActive, isMobile, hasResponse])
 
   useEffect(() => {
     if (!isMobile) {
@@ -213,7 +218,31 @@ export const ReplyArea = memo(function ReplyArea({
         </div>
       ) : null}
       <div ref={topRef} className={styles.sentinel} />
-      {mode !== 'hidden' || !title ? (
+      {isMobile && title ? (
+        <div className={clsx(styles.collapse, mode === 'hidden' && styles.collapseHidden)}>
+          <div className={styles.collapseInner}>
+            <div
+              ref={stepsRef}
+              className={clsx(
+                styles.steps,
+                mode === 'window' && styles.stepsWindowed,
+                mode === 'window' && clipped && styles.stepsClipped
+              )}
+            >
+              {view.steps.map((step, index) => (
+                <StepItem
+                  key={stepKey(step, index)}
+                  step={step}
+                  message={message}
+                  sources={view.sources}
+                  streaming={streaming}
+                  isLast={index === view.steps.length - 1}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : mode !== 'hidden' || !title ? (
         <div
           ref={stepsRef}
           className={clsx(

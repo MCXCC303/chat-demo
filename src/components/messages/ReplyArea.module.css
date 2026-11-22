@@ -2,6 +2,24 @@
   margin-bottom: 10px;
 
   --collapsible-area-title-height: 34px;
+
+.collapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows var(--ds-transition-duration) var(--ds-ease-in-out),
+    opacity var(--ds-transition-duration) var(--ds-ease-in-out);
+}
+
+.collapseHidden {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.collapseInner {
+  overflow: hidden;
+  min-height: 0;
+}
   --collapsible-area-window-height: 120px;
   --collapsible-area-window-fade-top: 12px;
   --collapsible-area-window-fade-bottom: 10px;

@@ -1,0 +1,42 @@
+{
+  "scenario": "continue",
+  "title": "续写未完成的回答",
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/anthropic/v1/messages",
+      "headers": {
+        "host": "<upstream>",
+        "connection": "keep-alive",
+        "x-api-key": "<redacted>",
+        "authorization": "<redacted>",
+        "content-type": "application/json",
+        "accept": "text/event-stream",
+        "accept-language": "*",
+        "sec-fetch-mode": "cors",
+        "user-agent": "node",
+        "accept-encoding": "gzip, deflate",
+        "content-length": "390"
+      },
+      "body": "{\"model\":\"deepseek-flash\",\"system\":\"该助手为DeepSeek，由深度求索公司创造。\",\"messages\":[{\"role\":\"latest_reminder\",\"content\":\"<date>,,Web,中文\"},{\"role\":\"user\",\"content\":\"golden-e2e 续写\"}],\"thinking\":{\"type\":\"disabled\"},\"safety_check\":{\"level\":\"high\"},\"tools\":[{\"type\":\"deepseek_read_url\",\"name\":\"deepseek_read_url\"}],\"title\":{\"enabled\":true},\"stream\":true}"
+    },
+    {
+      "method": "POST",
+      "path": "/anthropic/v1/messages",
+      "headers": {
+        "host": "<upstream>",
+        "connection": "keep-alive",
+        "x-api-key": "<redacted>",
+        "authorization": "<redacted>",
+        "content-type": "application/json",
+        "accept": "text/event-stream",
+        "accept-language": "*",
+        "sec-fetch-mode": "cors",
+        "user-agent": "node",
+        "accept-encoding": "gzip, deflate",
+        "content-length": "462"
+      },
+      "body": "{\"model\":\"deepseek-flash\",\"system\":\"该助手为DeepSeek，由深度求索公司创造。\",\"messages\":[{\"role\":\"latest_reminder\",\"content\":\"<date>,,Web,中文\"},{\"role\":\"user\",\"content\":\"golden-e2e 续写\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"mock-chunk-01\"}]}],\"thinking\":{\"type\":\"disabled\"},\"safety_check\":{\"level\":\"high\"},\"tools\":[{\"type\":\"deepseek_read_url\",\"name\":\"deepseek_read_url\"}],\"title\":{\"enabled\":true},\"stream\":true}"
+    }
+  ]
+}

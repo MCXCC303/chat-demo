@@ -87,6 +87,7 @@ export type AssistantMessage = MessageBranch & {
   latestReminder?: string
   /** 是否允许作为续写前缀；仍需满足回复状态与内容限制。 */
   prefix: boolean
+  turnId?: string
   status: ReplyStatus
   /** 可识别的内容块按接收顺序排列；续写产生的块追加在已有块之后 */
   blocks: ReplyBlock[]

@@ -5,13 +5,17 @@ declare const styles: {
   readonly newChat: string
   readonly newChatIcon: string
   readonly selectEntry: string
-  readonly search: string
-  readonly searchIcon: string
-  readonly searchInput: string
   readonly listWrap: string
   readonly list: string
   readonly section: string
   readonly sectionHeader: string
+  readonly loadingRows: string
+  readonly loadingHeaderRow: string
+  readonly loadingLabel: string
+  readonly loadingRow: string
+  readonly loadingBar: string
+  readonly loadingBarShort: string
+  readonly loadMoreError: string
   readonly selectionBar: string
   readonly selectionCount: string
   readonly bottom: string

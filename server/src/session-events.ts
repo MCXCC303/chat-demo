@@ -8,6 +8,7 @@ import type {
   SessionEvent,
   SessionEventType,
   SessionMetaPayload,
+  SessionPage,
   TurnStatePayload,
 } from '../../src/services/session/types.js'
 import type { SessionSummary } from '../../src/services/chat/types.js'
@@ -47,6 +48,7 @@ export type SessionEventOf<T extends SessionEventType> = {
 
 export interface SessionService {
   listSessions(): Promise<SessionSummary[]>
+  listSessionPage(offset: number, limit: number): Promise<SessionPage>
   handle(sessionId: string, command: SessionCommand): Promise<number[]>
   readFrom(sessionId: string, after: number): Promise<SessionEvent[]>
   subscribe(sessionId: string, listener: (event: SessionEvent) => void): () => void

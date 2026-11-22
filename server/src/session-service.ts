@@ -21,6 +21,7 @@ export type ControlFrame = {
 }
 
 const CONTROL_POLL_INTERVAL = 2000
+const HEAD_PAGE_SIZE = 50
 
 const buildSession = (
   sessionId: string,
@@ -101,13 +102,15 @@ export const createSessionService = (options: SessionServiceOptions): SessionSer
   let lastSnapshot = ''
 
   const currentFrame = async (): Promise<ControlFrame> => {
-    const sessions = await options.log.listSessions()
-    const serialized = JSON.stringify(sessions)
+    const all = await options.log.listSessions()
+    const sessions = all.slice(0, HEAD_PAGE_SIZE)
+    const hasMore = all.length > sessions.length
+    const serialized = JSON.stringify({ sessions, hasMore })
     if (serialized !== lastSnapshot) {
       lastSnapshot = serialized
       controlSeq += 1
     }
-    return { seq: controlSeq, type: 'sessions/snapshot', payload: { sessions } }
+    return { seq: controlSeq, type: 'sessions/snapshot', payload: { sessions, hasMore } }
   }
 
   const timer = setInterval(() => {
@@ -122,6 +125,12 @@ export const createSessionService = (options: SessionServiceOptions): SessionSer
   return {
     async listSessions(): Promise<SessionSummary[]> {
       return await options.log.listSessions()
+    },
+    async listSessionPage(offset, limit) {
+      const all = await options.log.listSessions()
+      const start = Math.min(Math.max(offset, 0), all.length)
+      const sessions = all.slice(start, start + Math.max(limit, 0))
+      return { sessions, hasMore: start + sessions.length < all.length }
     },
     async handle(sessionId, command) {
       const result = await commands.handle(sessionId, command)

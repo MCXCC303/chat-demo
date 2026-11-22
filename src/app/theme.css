@@ -362,6 +362,10 @@ body {
   --dsw-shadow-lv3:
     0 0 1px 0 rgba(0, 0, 0, 0.2), 0 0 4px 0 rgba(0, 0, 0, 0.02), 0 12px 32px 0 rgba(0, 0, 0, 0.08);
   --dsw-sider-width: 299px;
+  --dsw-session-item-height: 40px;
+  --dsw-session-header-height: 22px;
+  --dsw-session-section-gap: 16px;
+  --dsw-session-section-padding: 4px;
 }
 
 body {
@@ -397,5 +401,7 @@ body {
 @media not all and (min-width: 768px) {
   body {
     --dsw-sider-width: min(74vw, 340px);
+    --dsw-session-section-gap: 10px;
+    --dsw-session-section-padding: 2px;
   }
 }

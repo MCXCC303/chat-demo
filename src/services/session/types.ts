@@ -1,9 +1,5 @@
-import type {
-  ChatModel,
-  ContentBlockDelta,
-  OutputBlockStart,
-} from '../api/types.js'
-import type { FileAttachment, Message } from '../chat/types.js'
+import type { ChatModel, ContentBlockDelta, OutputBlockStart } from '../api/types.js'
+import type { FileAttachment, Message, SessionSummary } from '../chat/types.js'
 
 export type SessionEventType =
   | 'session/meta'
@@ -86,6 +82,11 @@ export type SessionCommand =
 
 export type CommandResult = {
   accepted: number[]
+}
+
+export type SessionPage = {
+  sessions: SessionSummary[]
+  hasMore: boolean
 }
 
 export type ControlEventType =

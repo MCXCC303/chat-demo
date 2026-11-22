@@ -6,6 +6,7 @@ import {
   useMobileSider,
 } from './mobileSiderState.js'
 import { isInHorizontalScrollContainer } from '../../utils/scroll.js'
+import { clearSiderOffset, paintSiderOffset } from './mobileSiderDrag.js'
 
 const ENGAGE_THRESHOLD = 10
 const FALLBACK_WIDTH = 261
@@ -32,6 +33,7 @@ export const useMobileDrawerDrag = (enabled: boolean) => {
     let base = 0
     let dragging = false
     let contentScrollable = false
+    let lastOffset = 0
 
     const onTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0]
@@ -61,12 +63,13 @@ export const useMobileDrawerDrag = (enabled: boolean) => {
           return
         }
         dragging = true
+        setMobileSiderOffset(base, base / width, true)
       }
       if (event.cancelable) {
         event.preventDefault()
       }
-      const offset = Math.min(width, Math.max(0, base + deltaX))
-      setMobileSiderOffset(offset, offset / width, true)
+      lastOffset = Math.min(width, Math.max(0, base + deltaX))
+      paintSiderOffset(lastOffset, lastOffset / width, width)
     }
 
     const onTouchEnd = () => {
@@ -74,9 +77,9 @@ export const useMobileDrawerDrag = (enabled: boolean) => {
         return
       }
       dragging = false
-      const { offset } = useMobileSider.getState()
-      setMobileSiderOffset(offset, offset / width, false)
-      if (offset > width * 0.4) {
+      clearSiderOffset()
+      setMobileSiderOffset(lastOffset, lastOffset / width, false)
+      if (lastOffset > width * 0.4) {
         openMobileSider()
       } else {
         closeMobileSider()

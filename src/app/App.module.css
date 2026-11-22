@@ -25,7 +25,6 @@
 }
 
 .drawerDragging .mainShifted {
-  transform: translateX(var(--mobile-sider-offset, 0px));
   transition: none;
 }
 

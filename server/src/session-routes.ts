@@ -5,6 +5,8 @@ import type { LegacySessionEnvelope } from './commands.js'
 import type { SessionService } from './session-events.js'
 
 const HEARTBEAT_INTERVAL = 15000
+const PAGE_SIZE = 50
+const MAX_PAGE_SIZE = 200
 
 const sendJson = (res: ServerResponse, status: number, value: unknown): void => {
   const body = JSON.stringify(value)
@@ -58,8 +60,17 @@ export type SessionRoutes = {
 }
 
 export const createSessionRoutes = (service: SessionService): SessionRoutes => ({
-  async list(_req, res) {
-    sendJson(res, 200, { sessions: await service.listSessions() })
+  async list(req, res) {
+    const url = new URL(req.url ?? '/', 'http://localhost')
+    const offset = Number(url.searchParams.get('offset') ?? '0')
+    const rawLimit = Number(url.searchParams.get('limit') ?? '0')
+    const limit =
+      Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, MAX_PAGE_SIZE) : PAGE_SIZE
+    sendJson(
+      res,
+      200,
+      await service.listSessionPage(Number.isFinite(offset) && offset > 0 ? offset : 0, limit)
+    )
   },
 
   async stream(_req, res, sessionId, after) {

@@ -6,6 +6,7 @@ import type { ChatModel } from '../api/types.js'
 import { cancelUpload, checkImageFileIds, uploadAttachment, useUploads } from '../attachments.js'
 import { useSettings } from '../settings.js'
 import { sendSessionCommand, SessionCommandError } from '../session/commands.js'
+import { fetchSessionPage } from '../session/list.js'
 import { applyFrame, createProjection, type SessionProjection } from '../session/projection.js'
 import { subscribeControl, subscribeSession } from '../session/stream.js'
 import type { ControlEvent, SessionCommand, SessionStreamFrame } from '../session/types.js'
@@ -32,6 +33,7 @@ import {
 /** deepseek-flash 同时支持深度思考与图片输入 */
 const MODEL: ChatModel = 'deepseek-flash'
 const SESSION_CACHE_LIMIT = 5
+const PAGE_SIZE = 50
 const CONTROL_FALLBACK_DELAY = 2000
 const CONTROL_RECONNECT_DELAY = 2000
 
@@ -42,6 +44,9 @@ type ChatState = {
   importingHistory: boolean
   /** 仅列表元数据，按 updatedAt 降序；流式消息更新不会改变此数组。 */
   sessions: SessionSummary[]
+  hasMore: boolean
+  loadingMore: boolean
+  loadMoreError: boolean
   sessionCache: Record<string, Session>
   sessionLoadErrors: Record<string, boolean>
   sessionSaveErrors: Record<string, boolean>
@@ -55,6 +60,9 @@ export const useChatStore = create<ChatState>(() => ({
   initError: false,
   importingHistory: false,
   sessions: [],
+  hasMore: false,
+  loadingMore: false,
+  loadMoreError: false,
   sessionCache: {},
   sessionLoadErrors: {},
   sessionSaveErrors: {},
@@ -423,7 +431,18 @@ const applyControlEvent = (event: ControlEvent): boolean => {
       if (!summaries) {
         return false
       }
-      set({ ready: true, initError: false, sessions: sortSessions(summaries) })
+      const head = sortSessions(summaries)
+      const hasMore = (event.payload as { hasMore?: unknown } | null)?.hasMore === true
+      set((state) => {
+        const headIds = new Set(head.map((item) => item.id))
+        const tail = state.sessions.filter((item) => !headIds.has(item.id))
+        return {
+          ready: true,
+          initError: false,
+          sessions: tail.length > 0 ? sortSessions([...head, ...tail]) : head,
+          hasMore: tail.length > 0 ? state.hasMore : hasMore,
+        }
+      })
       return true
     }
     case 'session/updated': {
@@ -605,6 +624,29 @@ export const replaceHistory = async (
     } else if (!ready) {
       void initChat()
     }
+  }
+}
+
+export const loadMoreSessions = async (): Promise<void> => {
+  const state = get()
+  if (!state.ready || !state.hasMore || state.loadingMore) {
+    return
+  }
+  set({ loadingMore: true, loadMoreError: false })
+  try {
+    const page = await fetchSessionPage(state.sessions.length, PAGE_SIZE)
+    set((current) => {
+      const known = new Set(current.sessions.map((item) => item.id))
+      const additions = page.sessions.filter((item) => !known.has(item.id))
+      return {
+        sessions: sortSessions([...current.sessions, ...additions]),
+        hasMore: page.hasMore && additions.length > 0,
+        loadingMore: false,
+        loadMoreError: false,
+      }
+    })
+  } catch {
+    set({ loadingMore: false, loadMoreError: true })
   }
 }
 

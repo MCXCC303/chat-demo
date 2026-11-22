@@ -5,7 +5,6 @@ import { DeepSeekWordmark } from '../base/BrandLogo.js'
 import {
   IconCloseOutline16,
   IconPanelLeftOutline16,
-  IconSearchOutline16,
   IconSelectListOutline14,
   IconSettingsOutline16,
   NewChatIcon,
@@ -13,7 +12,12 @@ import {
 import { setSiderCollapsed } from '../../services/settings.js'
 import { groupSessions } from '../../services/chat/sessionGroups.js'
 import { setSessionPinned } from '../../services/chat/store.js'
-import { newChat, removeSession, useChatStore } from '../../services/chat/store.js'
+import {
+  loadMoreSessions,
+  newChat,
+  removeSession,
+  useChatStore,
+} from '../../services/chat/store.js'
 import type { SessionSummary } from '../../services/chat/types.js'
 import { Button } from '../base/Button.js'
 import { IconButton } from '../base/IconButton.js'
@@ -21,8 +25,10 @@ import { Modal } from '../base/Modal.js'
 import { showToast } from '../base/toastState.js'
 import { openSettings } from '../settings/settingsDialogState.js'
 import { ScrollBar } from '../base/ScrollBar.js'
+import { setSiderDragTarget } from './mobileSiderDrag.js'
 import { closeMobileSider, useMobileSider } from './mobileSiderState.js'
 import { SessionItem } from './SessionItem.js'
+import { useVirtualSessions } from './virtualSessions.js'
 import styles from './Sider.module.css'
 
 const TOP_FADE_DISTANCE = 20
@@ -36,7 +42,6 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const groups = useMemo(() => groupSessions(sessions, now, t), [sessions, now, t])
   const [deleting, setDeleting] = useState<SessionSummary | null>(null)
   const [deletePending, setDeletePending] = useState(false)
-  const [query, setQuery] = useState('')
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
 
@@ -49,19 +54,17 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
     setSelectMode(false)
     setSelected([])
   }, [mobile])
-
-  const visibleGroups = useMemo(() => {
-    const keyword = query.trim().toLowerCase()
-    if (!keyword) {
-      return groups
-    }
-    return groups
-      .map((group) => ({
-        ...group,
-        sessions: group.sessions.filter((session) => session.title.toLowerCase().includes(keyword)),
-      }))
-      .filter((group) => group.sessions.length > 0)
-  }, [groups, query])
+  const ready = useChatStore((state) => state.ready)
+  const initError = useChatStore((state) => state.initError)
+  const hasMore = useChatStore((state) => state.hasMore)
+  const loadingMore = useChatStore((state) => state.loadingMore)
+  const loadMoreError = useChatStore((state) => state.loadMoreError)
+  const counts = useMemo(() => groups.map((group) => group.sessions.length), [groups])
+  const { metrics, ranges } = useVirtualSessions(
+    listRef,
+    counts,
+    hasMore ? loadMoreSessions : undefined
+  )
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>
@@ -108,9 +111,6 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
     update()
     const resizeObserver = new ResizeObserver(schedule)
     resizeObserver.observe(list)
-    for (const child of list.children) {
-      resizeObserver.observe(child)
-    }
     list.addEventListener('scroll', schedule, { passive: true })
     return () => {
       resizeObserver.disconnect()
@@ -119,7 +119,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
         cancelAnimationFrame(frame)
       }
     }
-  }, [visibleGroups])
+  }, [groups])
 
   return (
     <div
@@ -138,37 +138,22 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
           onClick={() => (mobile ? closeMobileSider() : setSiderCollapsed(true))}
         />
       </div>
-      {mobile ? (
-        selectMode ? (
-          <div className={styles.selectionBar}>
-            <span className={styles.selectionCount}>
-              {t('selectedConversations', { count: selected.length })}
-            </span>
-            <IconButton
-              className={styles.sectionAction}
-              size="xs"
-              icon={<IconCloseOutline16 />}
-              aria-label={t('close')}
-              onClick={() => {
-                setSelectMode(false)
-                setSelected([])
-              }}
-            />
-          </div>
-        ) : (
-          <div className={styles.search}>
-            <span className={styles.searchIcon}>
-              <IconSearchOutline16 />
-            </span>
-            <input
-              className={styles.searchInput}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t('searchConversations')}
-              aria-label={t('searchConversations')}
-            />
-          </div>
-        )
+      {mobile && selectMode ? (
+        <div className={styles.selectionBar}>
+          <span className={styles.selectionCount}>
+            {t('selectedConversations', { count: selected.length })}
+          </span>
+          <IconButton
+            className={styles.sectionAction}
+            size="xs"
+            icon={<IconCloseOutline16 />}
+            aria-label={t('close')}
+            onClick={() => {
+              setSelectMode(false)
+              setSelected([])
+            }}
+          />
+        </div>
       ) : null}
       <button
         type="button"
@@ -185,38 +170,71 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
       </button>
       <div className={styles.listWrap}>
         <div className={styles.list} ref={listRef}>
-          {visibleGroups.map((group) => (
-            <div key={group.key} className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <span>{group.label}</span>
+          {!ready && !initError ? (
+            <div className={styles.loadingRows} aria-hidden>
+              <div className={styles.loadingHeaderRow}>
+                <span className={styles.loadingLabel} />
               </div>
-              {group.sessions.map((session) => (
-                <SessionItem
-                  key={session.id}
-                  session={session}
-                  active={session.id === activeId}
-                  onDelete={() => setDeleting(session)}
-                  allowSelect={mobile}
-                  selectMode={selectMode}
-                  selected={selected.includes(session.id)}
-                  onToggleSelect={() =>
-                    setSelected((prev) =>
-                      prev.includes(session.id)
-                        ? prev.filter((id) => id !== session.id)
-                        : [...prev, session.id]
-                    )
-                  }
-                  onEnterSelectMode={() => {
-                    setSelectMode(true)
-                    setSelected((prev) =>
-                      prev.includes(session.id) ? prev : [...prev, session.id]
-                    )
-                  }}
-                  onTogglePin={() => setSessionPinned(session.id, !session.pinned)}
-                />
-              ))}
+              <div className={styles.loadingRow}>
+                <span className={styles.loadingBar} />
+              </div>
+              <div className={styles.loadingRow}>
+                <span className={styles.loadingBar} />
+              </div>
             </div>
-          ))}
+          ) : null}
+          {groups.map((group, index) => {
+            const range = ranges[index] ?? { start: 0, end: group.sessions.length }
+            const head = range.start * metrics.itemHeight
+            const tail = (group.sessions.length - range.end) * metrics.itemHeight
+            return (
+              <div key={group.key} className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <span>{group.label}</span>
+                </div>
+                {head > 0 ? <div style={{ height: head }} aria-hidden /> : null}
+                {group.sessions.slice(range.start, range.end).map((session) => (
+                  <SessionItem
+                    key={session.id}
+                    session={session}
+                    active={session.id === activeId}
+                    onDelete={() => setDeleting(session)}
+                    allowSelect={mobile}
+                    selectMode={selectMode}
+                    selected={selected.includes(session.id)}
+                    onToggleSelect={() =>
+                      setSelected((prev) =>
+                        prev.includes(session.id)
+                          ? prev.filter((id) => id !== session.id)
+                          : [...prev, session.id]
+                      )
+                    }
+                    onEnterSelectMode={() => {
+                      setSelectMode(true)
+                      setSelected((prev) =>
+                        prev.includes(session.id) ? prev : [...prev, session.id]
+                      )
+                    }}
+                    onTogglePin={() => setSessionPinned(session.id, !session.pinned)}
+                  />
+                ))}
+                {tail > 0 ? <div style={{ height: tail }} aria-hidden /> : null}
+              </div>
+            )
+          })}
+          {loadingMore ? (
+            <>
+              <div className={styles.loadingRow}>
+                <span className={styles.loadingBar} />
+              </div>
+              <div className={styles.loadingRow}>
+                <span className={clsx(styles.loadingBar, styles.loadingBarShort)} />
+              </div>
+            </>
+          ) : null}
+          {loadMoreError ? (
+            <div className={styles.loadMoreError}>{t('sessionLoadMoreOnError')}</div>
+          ) : null}
         </div>
         {mobile ? null : (
           <ScrollBar containerRef={listRef} className={styles.scrollBar} size={8} inset={8} />
@@ -284,9 +302,18 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
 export const MobileSider = () => {
   const open = useMobileSider((state) => state.open)
   const dragging = useMobileSider((state) => state.dragging)
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const maskRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setSiderDragTarget('drawer', drawerRef.current)
+    setSiderDragTarget('mask', maskRef.current)
+  }, [])
+
   return (
     <>
       <div
+        ref={maskRef}
         className={
           styles.drawerMask +
           (open ? ' ' + styles.drawerMaskActive : '') +
@@ -295,6 +322,7 @@ export const MobileSider = () => {
         onClick={closeMobileSider}
       />
       <div
+        ref={drawerRef}
         className={
           styles.drawer +
           (open ? ' ' + styles.drawerOpen : '') +

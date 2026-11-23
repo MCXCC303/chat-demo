@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { showToast } from '../../components/base/toastState.js'
 import { createId } from '../../utils/id.js'
 import { API_ORIGIN } from '../api/client.js'
-import type { ChatModel } from '../api/types.js'
 import { cancelUpload, checkImageFileIds, uploadAttachment, useUploads } from '../attachments.js'
 import { useSettings } from '../settings.js'
 import { sendSessionCommand, SessionCommandError } from '../session/commands.js'
@@ -30,8 +29,6 @@ import {
   type SessionSummary,
 } from './types.js'
 
-/** deepseek-flash 同时支持深度思考与图片输入 */
-const MODEL: ChatModel = 'deepseek-flash'
 const SESSION_CACHE_LIMIT = 5
 const PAGE_SIZE = 50
 const CONTROL_FALLBACK_DELAY = 2000
@@ -851,7 +848,7 @@ export const sendMessage = (targetSessionId: string | null) => {
     const attachments = await prepareAttachments(files)
     await sendCommand(
       sessionId as string,
-      { command: 'send', content: text, files: attachments, model: MODEL, thinking, search },
+      { command: 'send', content: text, files: attachments, thinking, search },
       true
     )
     if (created) {
@@ -979,7 +976,7 @@ export const retryUpload = (sessionId: string, messageId: string) => {
     }
     await sendCommand(
       sessionId,
-      { command: 'send', content: question.content, files, model: MODEL, thinking, search },
+      { command: 'send', content: question.content, files, thinking, search },
       true
     )
   })().catch(reportCommandError)

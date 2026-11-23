@@ -9,12 +9,6 @@ export type CredentialInfo = {
   masked?: string
 }
 
-export type CredentialCheck = {
-  ok: boolean
-  status?: number
-  message?: string
-}
-
 type BackendState = {
   mode: BackendMode
   home: string
@@ -61,27 +55,4 @@ export const detectBackend = async (): Promise<void> => {
   } catch {
     useBackend.setState({ mode: 'standalone', credential: null })
   }
-}
-
-export const saveCredential = async (value: string): Promise<void> => {
-  const credential = (await readJson('/api/credential', {
-    method: 'PUT',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ value }),
-  })) as CredentialInfo
-  useBackend.setState({ credential })
-}
-
-export const removeCredential = async (): Promise<void> => {
-  const credential = (await readJson('/api/credential', { method: 'DELETE' })) as CredentialInfo
-  useBackend.setState({ credential })
-}
-
-export const checkCredential = async (value?: string): Promise<CredentialCheck> => {
-  const result = (await readJson('/api/credential/verify', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(value === undefined ? {} : { value }),
-  })) as CredentialCheck
-  return result
 }

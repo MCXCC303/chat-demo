@@ -1,6 +1,12 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { API_KEY_REF, type CredentialStore } from './credentials.ts'
+import type { CredentialStore } from './credentials.ts'
 import { homeDisplay } from './home.ts'
+import {
+  DEFAULT_PROVIDER_ID,
+  describeProvider,
+  type ProviderProfile,
+  type ProviderStore,
+} from './providers.ts'
 import type { Storage } from './storage.ts'
 import type { SessionService } from './session-events.ts'
 import { createSessionRoutes } from './session-routes.ts'
@@ -43,28 +49,55 @@ const header = (req: IncomingMessage, name: string): string | undefined => {
   return typeof value === 'string' ? value : undefined
 }
 
+const verifyProviderKey = async (
+  baseURL: string,
+  value: string
+): Promise<{ ok: true } | { ok: false; status: number; message: string }> => {
+  try {
+    const response = await fetch(new URL('/models', baseURL), {
+      headers: { 'x-api-key': value, authorization: `Bearer ${value}` },
+    })
+    if (response.ok) {
+      return { ok: true }
+    }
+    const text = await response.text().catch(() => '')
+    return { ok: false, status: response.status, message: text }
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      message: error instanceof Error ? error.message : String(error),
+    }
+  }
+}
+
 export type ApiOptions = {
   storage: Storage
   credentials: CredentialStore
   sessions: SessionService
+  providers: ProviderStore
   home: string
   version: string
-  upstream: string
 }
 
 export const createApi =
   (options: ApiOptions) =>
   async (req: IncomingMessage, res: ServerResponse, path: string): Promise<void> => {
-    const { storage, credentials } = options
+    const { storage, credentials, providers } = options
     const method = req.method ?? 'GET'
 
     if (path === '/api/status' && method === 'GET') {
+      const active = await providers.readActive()
+      const fallback = await providers.read(active.provider)
       sendJson(res, 200, {
         version: options.version,
         mode: 'server',
         storage: 'server',
         home: homeDisplay(options.home),
-        credential: await credentials.describe(API_KEY_REF),
+        active,
+        credential: fallback
+          ? await credentials.describe(fallback.apiKeyRef)
+          : { configured: false, writable: true },
       })
       return
     }
@@ -93,60 +126,100 @@ export const createApi =
       return
     }
 
-    if (path === '/api/credential') {
-      if (method === 'GET') {
-        sendJson(res, 200, await credentials.describe(API_KEY_REF))
+    if (path === '/api/providers' && method === 'GET') {
+      const list = await providers.list()
+      sendJson(res, 200, {
+        defaultId: DEFAULT_PROVIDER_ID,
+        active: await providers.readActive(),
+        providers: await Promise.all(
+          list.map(
+            async (profile) =>
+              await describeProvider(profile, providers.isBuiltin(profile.id), credentials)
+          )
+        ),
+      })
+      return
+    }
+
+    if (path === '/api/providers/selection' && method === 'PUT') {
+      const body = (await readJsonBody(req)) as { provider?: unknown; model?: unknown } | undefined
+      const provider = typeof body?.provider === 'string' ? body.provider : ''
+      const model = typeof body?.model === 'string' ? body.model : ''
+      try {
+        const active = await providers.writeActive(provider, model)
+        sendJson(res, 200, { active })
+      } catch (error) {
+        sendJson(res, 400, { error: error instanceof Error ? error.message : String(error) })
+      }
+      return
+    }
+
+    if (path.startsWith('/api/providers/')) {
+      const rest = path.slice('/api/providers/'.length)
+      const slash = rest.indexOf('/')
+      const id = decodeURIComponent(slash === -1 ? rest : rest.slice(0, slash))
+      const action = slash === -1 ? '' : rest.slice(slash + 1)
+      const profile = await providers.read(id)
+      if (!profile) {
+        sendJson(res, 404, { error: `unknown provider: ${id}` })
         return
       }
-      if (method === 'PUT') {
+      const summarize = async (target: ProviderProfile) =>
+        await describeProvider(target, providers.isBuiltin(target.id), credentials)
+
+      if (action === '' && method === 'PUT') {
+        const body = (await readJsonBody(req)) as Partial<ProviderProfile> | undefined
+        try {
+          const saved = await providers.write({
+            ...profile,
+            displayName:
+              typeof body?.displayName === 'string' ? body.displayName : profile.displayName,
+            baseURL: typeof body?.baseURL === 'string' ? body.baseURL : profile.baseURL,
+            apiKeyRef: typeof body?.apiKeyRef === 'string' ? body.apiKeyRef : profile.apiKeyRef,
+            models: Array.isArray(body?.models) ? body.models : profile.models,
+          })
+          sendJson(res, 200, await summarize(saved))
+        } catch (error) {
+          sendJson(res, 400, {
+            error: error instanceof Error ? error.message : String(error),
+          })
+        }
+        return
+      }
+
+      if (action === '' && method === 'DELETE') {
+        const removed = await providers.remove(id)
+        if (!removed) {
+          sendJson(res, 400, { error: 'built-in provider cannot be removed' })
+          return
+        }
+        sendJson(res, 200, { ok: true })
+        return
+      }
+
+      if (action === 'credential' && method === 'PUT') {
         const body = (await readJsonBody(req)) as { value?: unknown } | undefined
         const value = typeof body?.value === 'string' ? body.value.trim() : ''
         if (!value) {
           sendJson(res, 400, { error: 'credential value must not be empty' })
           return
         }
-        await credentials.set(API_KEY_REF, value)
-        sendJson(res, 200, await credentials.describe(API_KEY_REF))
-        return
-      }
-      if (method === 'DELETE') {
-        await credentials.unset(API_KEY_REF)
-        sendJson(res, 200, await credentials.describe(API_KEY_REF))
-        return
-      }
-    }
-
-    if (path === '/api/credential/verify' && method === 'POST') {
-      const body = (await readJsonBody(req)) as { value?: unknown } | undefined
-      const candidate =
-        typeof body?.value === 'string' && body.value.trim().length > 0
-          ? body.value.trim()
-          : undefined
-      const credential = candidate
-        ? { value: candidate, source: 'store' as const }
-        : await credentials.resolve(API_KEY_REF)
-      if (!credential) {
-        sendJson(res, 400, { error: `${API_KEY_REF} is not configured` })
-        return
-      }
-      try {
-        const response = await fetch(new URL('/models', options.upstream), {
-          headers: { 'x-api-key': credential.value, authorization: `Bearer ${credential.value}` },
-        })
-        if (response.ok) {
-          sendJson(res, 200, { ok: true })
+        const verified = await verifyProviderKey(profile.baseURL, value)
+        if (!verified.ok) {
+          const status = verified.status === 401 || verified.status === 403 ? 401 : 502
+          sendJson(res, status, { error: verified.message })
           return
         }
-        const text = await response.text().catch(() => '')
-        sendJson(res, 200, { ok: false, status: response.status, message: text })
-      } catch (error) {
-        sendJson(res, 200, {
-          ok: false,
-          status: 0,
-          message: error instanceof Error ? error.message : String(error),
-        })
+        await credentials.set(profile.apiKeyRef, value)
+        sendJson(res, 200, await summarize(profile))
+        return
       }
-      return
+
+      if (action === 'credential' && method === 'DELETE') {
+        await credentials.unset(profile.apiKeyRef)
+        sendJson(res, 200, await summarize(profile))
+        return
+      }
     }
 
     if (path === '/api/settings') {

@@ -107,7 +107,7 @@ export const AssistantMessage = memo(function AssistantMessage({
                 <button
                   type="button"
                   className={styles.noticeAction}
-                  onClick={() => openSettings('data')}
+                  onClick={() => openSettings('models')}
                 >
                   {t('changeApiKey')}
                 </button>
@@ -162,6 +162,11 @@ export const AssistantMessage = memo(function AssistantMessage({
               }}
             />
           </div>
+          {message.model ? (
+            <span className={styles.modelLabel}>
+              {t('messageModelLabel', { model: message.model })}
+            </span>
+          ) : null}
           {isLast && canContinueReply(message) ? (
             <Button
               variant="outlined"

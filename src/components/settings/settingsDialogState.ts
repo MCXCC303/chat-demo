@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { useBackend } from '../../services/backend.js'
 import { useSettings } from '../../services/settings.js'
 
-/** 设置弹窗的分组：通用设置 / 数据管理 */
-export type SettingsSection = 'general' | 'data'
+/** 设置弹窗的分组：通用设置 / 数据管理 / 模型供应商 */
+export type SettingsSection = 'general' | 'data' | 'models'
 
 /** 设置弹窗：侧边栏底部、没有 API Key 时的操作与 401 提示都可以打开；section 为打开时选中的分组 */
 export const useSettingsDialog = create(() => ({
@@ -16,18 +16,18 @@ export const openSettings = (section: SettingsSection) =>
 
 export const closeSettings = () => useSettingsDialog.setState({ open: false })
 
-/** 没有 API Key 时打开设置并选中 API Key 所在的「数据管理」，返回是否已有 Key */
+/** 没有 API Key 时打开设置并选中 API Key 所在的「模型」，返回是否已有 Key */
 export const ensureApiKey = () => {
   if (useBackend.getState().mode === 'server') {
     if (useBackend.getState().credential?.configured) {
       return true
     }
-    openSettings('data')
+    openSettings('models')
     return false
   }
   if (useSettings.getState().apiKey) {
     return true
   }
-  openSettings('data')
+  openSettings('models')
   return false
 }

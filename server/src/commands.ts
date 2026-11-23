@@ -18,13 +18,13 @@ import {
   AgentError,
   buildRequestBody,
   createLatestReminder,
-  DEFAULT_MODEL,
   runAssistantStream,
   streamUpstream,
   toFailure,
   type ServerSettings,
 } from './agent.ts'
-import { API_KEY_REF, type CredentialStore } from './credentials.ts'
+import type { CredentialStore } from './credentials.ts'
+import type { ActiveResolver, ProviderResolver } from './providers.ts'
 import type { SessionLog } from './session-events.ts'
 
 export type SettingsSource = {
@@ -33,7 +33,8 @@ export type SettingsSource = {
 
 export type CommandHandlerOptions = {
   log: SessionLog
-  upstream: string
+  resolveProvider: ProviderResolver
+  readActive: ActiveResolver
   credentials: CredentialStore
   settings: SettingsSource
   now?: () => number
@@ -212,7 +213,8 @@ const isAssistantMessage = (message: Message | undefined): message is AssistantM
 
 export class SessionCommands {
   private readonly log: SessionLog
-  private readonly upstream: string
+  private readonly resolveProvider: ProviderResolver
+  private readonly readActive: ActiveResolver
   private readonly credentials: CredentialStore
   private readonly settings: SettingsSource
   private readonly now: () => number
@@ -222,7 +224,8 @@ export class SessionCommands {
 
   constructor(options: CommandHandlerOptions) {
     this.log = options.log
-    this.upstream = options.upstream
+    this.resolveProvider = options.resolveProvider
+    this.readActive = options.readActive
     this.credentials = options.credentials
     this.settings = options.settings
     this.now = options.now ?? Date.now
@@ -306,6 +309,7 @@ export class SessionCommands {
 
   private createReply(options: {
     model: ChatModel
+    provider: string
     thinking: boolean
     search: boolean
   }): AssistantMessage {
@@ -314,6 +318,7 @@ export class SessionCommands {
       role: 'assistant',
       createdAt: this.now(),
       model: options.model,
+      provider: options.provider,
       thinking: options.thinking,
       search: options.search,
       prefix: true,
@@ -338,8 +343,10 @@ export class SessionCommands {
       parentId: path.at(-1)?.id ?? null,
       selectedChildId: undefined,
     }
+    const active = await this.readActive()
     const reply = this.createReply({
-      model: command.model ?? DEFAULT_MODEL,
+      model: active.model,
+      provider: active.provider,
       thinking: command.thinking ?? settings.thinking,
       search: command.search ?? settings.search,
     })
@@ -373,8 +380,10 @@ export class SessionCommands {
     if (!isUserMessage(question) || !isAssistantMessage(path[index])) {
       throw new CommandError('只能重新生成回答')
     }
+    const active = await this.readActive()
     const reply = this.createReply({
-      model: DEFAULT_MODEL,
+      model: active.model,
+      provider: active.provider,
       thinking: settings.thinking,
       search: settings.search,
     })
@@ -414,8 +423,10 @@ export class SessionCommands {
       parentId: path[index - 1]?.id ?? null,
       selectedChildId: undefined,
     }
+    const active = await this.readActive()
     const reply = this.createReply({
-      model: DEFAULT_MODEL,
+      model: active.model,
+      provider: active.provider,
       thinking: settings.thinking,
       search: settings.search,
     })
@@ -451,9 +462,11 @@ export class SessionCommands {
     ) {
       throw new CommandError('这条回答不能续写')
     }
+    const active = await this.readActive()
     const reply: AssistantMessage = {
       ...previous,
-      model: previous.model ?? DEFAULT_MODEL,
+      model: previous.model ?? active.model,
+      provider: previous.provider ?? active.provider,
       thinking: previous.thinking ?? settings.thinking,
       search: previous.search ?? settings.search,
       status: 'pending',
@@ -612,9 +625,11 @@ export class SessionCommands {
     const messageId = assistant.id
     let current = assistant
     try {
-      const credential = await this.credentials.resolve(API_KEY_REF)
+      const active = await this.readActive()
+      const provider = await this.resolveProvider(current.provider ?? active.provider)
+      const credential = await this.credentials.resolve(provider.apiKeyRef)
       if (!credential) {
-        throw new AgentError('http', `${API_KEY_REF} is not configured on this machine`)
+        throw new AgentError('http', `${provider.apiKeyRef} is not configured on this machine`)
       }
       const body = buildRequestBody({
         history: options.history,
@@ -622,12 +637,12 @@ export class SessionCommands {
         prefix: options.prefix,
         thinking: current.thinking ?? false,
         search: current.search ?? false,
-        model: current.model ?? DEFAULT_MODEL,
+        model: current.model ?? active.model,
         title: options.title,
         latestReminder: options.latestReminder,
       })
       const source = streamUpstream({
-        origin: this.upstream,
+        origin: provider.baseURL,
         apiKey: credential.value,
         body,
         signal: controller.signal,

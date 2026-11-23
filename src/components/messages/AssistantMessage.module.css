@@ -116,6 +116,18 @@
   margin-left: auto;
 }
 
+.modelLabel {
+  margin-left: auto;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+  white-space: nowrap;
+}
+
+.modelLabel ~ .continueButton {
+  margin-left: 0;
+}
+
 .summary {
   display: flex;
   align-items: center;

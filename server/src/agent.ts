@@ -26,8 +26,6 @@ import type {
 
 export const SYSTEM_PROMPT = '该助手为DeepSeek，由深度求索公司创造。'
 
-export const DEFAULT_MODEL: ChatModel = 'deepseek-flash'
-
 const SAFETY_CHECK = { level: 'high' } as const
 
 const FILES_BETA = 'files-api-2025-04-14'

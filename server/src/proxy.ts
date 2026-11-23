@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { API_KEY_REF, type CredentialStore } from './credentials.ts'
+import type { CredentialStore } from './credentials.ts'
+import type { ProviderResolver } from './providers.ts'
 
 const HOP_BY_HOP = new Set([
   'connection',
@@ -32,28 +33,29 @@ const readBody = async (req: IncomingMessage): Promise<Uint8Array<ArrayBuffer>> 
 }
 
 export type ProxyOptions = {
-  upstream: string
+  resolveProvider: ProviderResolver
   credentials: CredentialStore
 }
 
 export const createProxy =
   (options: ProxyOptions) =>
   async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    const credential = await options.credentials.resolve(API_KEY_REF)
+    const provider = await options.resolveProvider()
+    const credential = await options.credentials.resolve(provider.apiKeyRef)
     if (!credential) {
       res.writeHead(401, { 'content-type': 'application/json' })
       res.end(
         JSON.stringify({
           error: {
             type: 'authentication_error',
-            message: `${API_KEY_REF} is not configured on this machine`,
+            message: `${provider.apiKeyRef} is not configured on this machine`,
           },
         })
       )
       return
     }
 
-    const target = new URL(req.url ?? '/', options.upstream)
+    const target = new URL(req.url ?? '/', provider.baseURL)
     const headers: Record<string, string> = {}
     for (const [name, value] of Object.entries(req.headers)) {
       if (value === undefined || HOP_BY_HOP.has(name.toLowerCase())) {

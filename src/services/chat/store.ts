@@ -5,6 +5,7 @@ import { API_ORIGIN } from '../api/client.js'
 import { cancelUpload, checkImageFileIds, uploadAttachment, useUploads } from '../attachments.js'
 import { useSettings } from '../settings.js'
 import { sendSessionCommand, SessionCommandError } from '../session/commands.js'
+import { fetchSessionHistoryPage } from '../session/history.js'
 import { fetchSessionPage } from '../session/list.js'
 import { applyFrame, createProjection, type SessionProjection } from '../session/projection.js'
 import { subscribeControl, subscribeSession } from '../session/stream.js'
@@ -31,8 +32,15 @@ import {
 
 const SESSION_CACHE_LIMIT = 5
 const PAGE_SIZE = 50
+const HISTORY_PAGE_SIZE = 20
 const CONTROL_FALLBACK_DELAY = 2000
 const CONTROL_RECONNECT_DELAY = 2000
+
+export type SessionHistoryState = {
+  hasMore: boolean
+  loading: boolean
+  error: boolean
+}
 
 type ChatState = {
   ready: boolean
@@ -47,6 +55,7 @@ type ChatState = {
   sessionCache: Record<string, Session>
   sessionLoadErrors: Record<string, boolean>
   sessionSaveErrors: Record<string, boolean>
+  history: Record<string, SessionHistoryState>
   /** null 表示新对话（欢迎页） */
   activeId: string | null
   streaming: Record<string, boolean>
@@ -63,6 +72,7 @@ export const useChatStore = create<ChatState>(() => ({
   sessionCache: {},
   sessionLoadErrors: {},
   sessionSaveErrors: {},
+  history: {},
   activeId: null,
   streaming: {},
 }))
@@ -106,6 +116,29 @@ const sameStreaming = (a: Record<string, boolean>, b: Record<string, boolean>) =
 }
 
 const touchSession = (id: string) => sessionAccess.set(id, ++accessSequence)
+
+const clearSessionLoadError = (id: string) => {
+  set((state) =>
+    Object.hasOwn(state.sessionLoadErrors, id)
+      ? { sessionLoadErrors: { ...state.sessionLoadErrors, [id]: false } }
+      : state
+  )
+}
+
+const setSessionHistory = (id: string, patch: Partial<SessionHistoryState>) => {
+  set((state) => {
+    const current = state.history[id] ?? { hasMore: false, loading: false, error: false }
+    const next = { ...current, ...patch }
+    if (
+      current.hasMore === next.hasMore &&
+      current.loading === next.loading &&
+      current.error === next.error
+    ) {
+      return state
+    }
+    return { history: { ...state.history, [id]: next } }
+  })
+}
 
 const isGenerating = (id: string): boolean => {
   if (pendingTurns.has(id)) {
@@ -247,6 +280,7 @@ const trimSessionCache = () => {
       sessionCache: Object.fromEntries(
         Object.entries(state.sessionCache).filter(([id]) => !evicted.has(id))
       ),
+      history: Object.fromEntries(Object.entries(state.history).filter(([id]) => !evicted.has(id))),
     }))
   }
 }
@@ -262,6 +296,30 @@ const subscribeSessionStream = (id: string) => {
   void (async () => {
     let loaded = false
     try {
+      if (!projection.session) {
+        let page: Awaited<ReturnType<typeof fetchSessionHistoryPage>> | undefined
+        try {
+          page = await fetchSessionHistoryPage(id, null, HISTORY_PAGE_SIZE, controller.signal)
+        } catch {
+          if (controller.signal.aborted) {
+            return
+          }
+        }
+        if (controller.signal.aborted || projections.get(id) !== projection) {
+          return
+        }
+        if (page) {
+          projection.session = withRoot(page.session)
+          projection.seq = page.seq
+          dirty.add(id)
+          scheduleFlush()
+          setSessionHistory(id, { hasMore: page.hasMore, loading: false, error: false })
+          loaded = true
+          clearSessionLoadError(id)
+        } else {
+          setSessionHistory(id, { hasMore: false, loading: false, error: false })
+        }
+      }
       for await (const event of subscribeSession(id, projection.seq, controller.signal)) {
         const current = projections.get(id)
         if (!current) {
@@ -281,11 +339,7 @@ const subscribeSessionStream = (id: string) => {
         scheduleFlush()
         if (!loaded) {
           loaded = true
-          set((state) =>
-            Object.hasOwn(state.sessionLoadErrors, id)
-              ? { sessionLoadErrors: { ...state.sessionLoadErrors, [id]: false } }
-              : state
-          )
+          clearSessionLoadError(id)
         }
       }
     } catch (error) {
@@ -320,6 +374,7 @@ const removeSessionFromState = (id: string) => {
     sessionSaveErrors: Object.fromEntries(
       Object.entries(state.sessionSaveErrors).filter(([key]) => key !== id)
     ),
+    history: Object.fromEntries(Object.entries(state.history).filter(([key]) => key !== id)),
     activeId: state.activeId === id ? null : state.activeId,
   }))
 }
@@ -608,6 +663,7 @@ export const replaceHistory = async (
       sessionCache: {},
       sessionLoadErrors: {},
       sessionSaveErrors: {},
+      history: {},
       activeId: kept ? activeId : null,
     })
     refreshStreaming()
@@ -644,6 +700,43 @@ export const loadMoreSessions = async (): Promise<void> => {
     })
   } catch {
     set({ loadingMore: false, loadMoreError: true })
+  }
+}
+
+export const loadOlderMessages = async (sessionId: string): Promise<void> => {
+  const history = get().history[sessionId]
+  const projection = projections.get(sessionId)
+  const session = projection?.session
+  if (!projection || !session || !history?.hasMore || history.loading) {
+    return
+  }
+  const before = session.rootMessageId
+  if (!before) {
+    setSessionHistory(sessionId, { hasMore: false })
+    return
+  }
+  setSessionHistory(sessionId, { loading: true, error: false })
+  try {
+    const page = await fetchSessionHistoryPage(sessionId, before, HISTORY_PAGE_SIZE)
+    const current = projections.get(sessionId)
+    if (!current?.session) {
+      setSessionHistory(sessionId, { loading: false })
+      return
+    }
+    const known = new Set(current.session.messages.map((message) => message.id))
+    const older = page.session.messages.filter((message) => !known.has(message.id))
+    if (older.length > 0) {
+      current.session = {
+        ...current.session,
+        messages: [...older, ...current.session.messages],
+        rootMessageId: page.session.rootMessageId ?? older[0]?.id ?? current.session.rootMessageId,
+      }
+      dirty.add(sessionId)
+      flushProjections()
+    }
+    setSessionHistory(sessionId, { hasMore: page.hasMore, loading: false, error: false })
+  } catch {
+    setSessionHistory(sessionId, { loading: false, error: true })
   }
 }
 

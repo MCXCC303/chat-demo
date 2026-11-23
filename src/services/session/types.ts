@@ -1,5 +1,5 @@
 import type { ContentBlockDelta, OutputBlockStart } from '../api/types.js'
-import type { FileAttachment, Message, SessionSummary } from '../chat/types.js'
+import type { FileAttachment, Message, Session, SessionSummary } from '../chat/types.js'
 
 export type SessionEventType =
   | 'session/meta'
@@ -86,6 +86,13 @@ export type CommandResult = {
 export type SessionPage = {
   sessions: SessionSummary[]
   hasMore: boolean
+}
+
+export type SessionHistoryPage = {
+  session: Session
+  seq: number
+  hasMore: boolean
+  before: string | null
 }
 
 export type ControlEventType =

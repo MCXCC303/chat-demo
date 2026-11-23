@@ -7,6 +7,7 @@ import type {
   SessionCommand,
   SessionEvent,
   SessionEventType,
+  SessionHistoryPage,
   SessionMetaPayload,
   SessionPage,
   TurnStatePayload,
@@ -56,6 +57,11 @@ export interface SessionService {
     listener: (frame: { seq: number; type: string; payload: unknown }) => void
   ): () => void
   readSession(sessionId: string): Promise<LegacySessionEnvelope | undefined>
+  readHistoryPage(
+    sessionId: string,
+    before: string | null,
+    limit: number
+  ): Promise<SessionHistoryPage | undefined>
   importSessions(items: LegacySessionEnvelope[]): Promise<SessionSummary[]>
 }
 

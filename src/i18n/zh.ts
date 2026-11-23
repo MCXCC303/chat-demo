@@ -19,6 +19,7 @@ export const zh = {
   newChat: '开启新对话',
   untitledChat: '新对话',
   sessionLoading: '正在加载对话...',
+  loadEarlierMessages: '加载更早的消息',
   sessionListLoadFailed: '对话列表加载失败，请重试',
   sessionLoadMoreOnError: '未能加载，继续滚动重试',
   sessionLoadFailed: '对话加载失败，请重试',

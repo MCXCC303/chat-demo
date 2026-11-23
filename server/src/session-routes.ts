@@ -6,6 +6,7 @@ import type { SessionService } from './session-events.js'
 
 const HEARTBEAT_INTERVAL = 15000
 const PAGE_SIZE = 50
+const HISTORY_PAGE_SIZE = 20
 const MAX_PAGE_SIZE = 200
 
 const sendJson = (res: ServerResponse, status: number, value: unknown): void => {
@@ -56,6 +57,7 @@ export type SessionRoutes = {
   commands: (req: IncomingMessage, res: ServerResponse, sessionId: string) => Promise<void>
   control: (req: IncomingMessage, res: ServerResponse) => Promise<void>
   readSession: (req: IncomingMessage, res: ServerResponse, sessionId: string) => Promise<void>
+  history: (req: IncomingMessage, res: ServerResponse, sessionId: string) => Promise<void>
   replace: (req: IncomingMessage, res: ServerResponse) => Promise<void>
 }
 
@@ -130,6 +132,22 @@ export const createSessionRoutes = (service: SessionService): SessionRoutes => (
       return
     }
     sendJson(res, 200, envelope)
+  },
+
+  async history(req, res, sessionId) {
+    const url = new URL(req.url ?? '/', 'http://localhost')
+    const before = url.searchParams.get('before')
+    const rawLimit = Number(url.searchParams.get('limit') ?? '0')
+    const limit =
+      Number.isFinite(rawLimit) && rawLimit > 0
+        ? Math.min(rawLimit, MAX_PAGE_SIZE)
+        : HISTORY_PAGE_SIZE
+    const page = await service.readHistoryPage(sessionId, before || null, limit)
+    if (!page) {
+      sendJson(res, 404, { error: 'session not found' })
+      return
+    }
+    sendJson(res, 200, page)
   },
 
   async replace(req, res) {

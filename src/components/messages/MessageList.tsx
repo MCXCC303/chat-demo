@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useIsMobile } from '../../app/viewport.js'
+import { useTranslate } from '../../i18n/index.js'
 import {
   buildMessageVersions,
   getVisibleMessages,
   type MessageVersions,
 } from '../../services/chat/branches.js'
-import { selectMessageVersion } from '../../services/chat/store.js'
+import { selectMessageVersion, type SessionHistoryState } from '../../services/chat/store.js'
 import type { Session } from '../../services/chat/types.js'
 import { closeSearchPanel } from '../search/searchPanelState.js'
 import { AssistantMessage } from './AssistantMessage.js'
 import { clampScrollTop } from './autoScrollClamp.js'
 import { ScrollBar } from '../base/ScrollBar.js'
+import { Spinner } from '../base/Spinner.js'
 import { ScrollNav, type ScrollNavItem } from './ScrollNav.js'
 import { ScrollToBottomContext, ScrollToLatestContext } from './scrollContext.js'
 import { UserMessage } from './UserMessage.js'
@@ -36,6 +38,7 @@ import styles from './MessageList.module.css'
 /** 距底部小于该值时视为在底部，流式内容增长时跟随 */
 const STICKY_THRESHOLD = 40
 const SCROLL_BOTTOM_THRESHOLD = 52
+const HISTORY_LOAD_THRESHOLD = 32
 const EMPTY_VERSIONS: MessageVersions = { ids: [], index: -1 }
 
 const isScrollBottomVisible = (el: HTMLElement) =>
@@ -86,18 +89,25 @@ const findActiveQuestionId = (
 export const MessageList = ({
   session,
   streaming,
+  history,
+  onLoadOlder,
   footer,
 }: {
   session: Session
   streaming: boolean
+  history?: SessionHistoryState
+  onLoadOlder?: () => void
   footer: React.ReactNode
 }) => {
+  const t = useTranslate()
   const isMobile = useIsMobile()
   const scrollRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const stickyRef = useRef(true)
   const scrollTopRef = useRef(0)
   const restoreScrollRef = useRef<{ messageId: string; top: number } | null>(null)
+  const prependAnchorRef = useRef<{ id: string | null; top: number; height: number } | null>(null)
+  const historyLoadingRef = useRef(false)
   const streamingIdRef = useRef<string | null>(null)
   const stoppedRef = useRef<string | null>(null)
   const [showScrollBottom, setShowScrollBottom] = useState(false)
@@ -129,6 +139,38 @@ export const MessageList = ({
   const lastMessage = messages.at(-1)
   const lastMessageId = lastMessage?.id
   const streamingMessageId = streaming && lastMessage?.role === 'assistant' ? lastMessage.id : null
+
+  const loadEarlier = useCallback(() => {
+    const el = scrollRef.current
+    if (!el || !onLoadOlder || !history?.hasMore || history.loading) {
+      return
+    }
+    const first = el.querySelector<HTMLElement>('[data-message-id]')
+    prependAnchorRef.current = {
+      id: first?.getAttribute('data-message-id') ?? null,
+      top: first?.getBoundingClientRect().top ?? 0,
+      height: el.scrollHeight,
+    }
+    onLoadOlder()
+  }, [history?.hasMore, history?.loading, onLoadOlder])
+
+  useLayoutEffect(() => {
+    if (historyLoadingRef.current && !history?.loading) {
+      const el = scrollRef.current
+      const anchor = prependAnchorRef.current
+      if (el && anchor) {
+        const target = anchor.id
+          ? el.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(anchor.id)}"]`)
+          : null
+        el.scrollTop += target
+          ? target.getBoundingClientRect().top - anchor.top
+          : el.scrollHeight - anchor.height
+        scrollTopRef.current = el.scrollTop
+      }
+      prependAnchorRef.current = null
+    }
+    historyLoadingRef.current = history?.loading ?? false
+  }, [history?.loading])
 
   useLayoutEffect(() => {
     streamingIdRef.current = streamingMessageId
@@ -277,10 +319,13 @@ export const MessageList = ({
       scrollTopRef.current = el.scrollTop
       setShowScrollBottom(isScrollBottomVisible(el))
       updateActiveNav()
+      if (el.scrollTop <= HISTORY_LOAD_THRESHOLD) {
+        loadEarlier()
+      }
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
-  }, [isMobile, scrollToBottom, updateActiveNav])
+  }, [isMobile, scrollToBottom, updateActiveNav, loadEarlier])
 
   const lastIndex = messages.length - 1
   const uploadRetryId = getUploadRetryId(messages, streaming)
@@ -293,6 +338,17 @@ export const MessageList = ({
           <div ref={isMobile ? undefined : scrollRef} className={styles.container}>
             <div ref={isMobile ? scrollRef : undefined} className={styles.scroll}>
               <div ref={contentRef} className={styles.column}>
+                {history?.hasMore || history?.loading || history?.error ? (
+                  <div className={styles.historyEdge}>
+                    {history.loading ? (
+                      <Spinner />
+                    ) : (
+                      <button type="button" className={styles.historyMore} onClick={loadEarlier}>
+                        {history.error ? t('sessionLoadMoreOnError') : t('loadEarlierMessages')}
+                      </button>
+                    )}
+                  </div>
+                ) : null}
                 {messages.map((message, index) =>
                   message.role === 'user' ? (
                     <UserMessage

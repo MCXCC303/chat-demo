@@ -21,6 +21,7 @@ export const en = {
   newChat: 'New chat',
   untitledChat: 'New chat',
   sessionLoading: 'Loading chats...',
+  loadEarlierMessages: 'Load earlier messages',
   sessionListLoadFailed: 'Unable to load the chat list. Please try again.',
   sessionLoadMoreOnError: 'Failed to load. Scroll to retry.',
   sessionLoadFailed: 'Unable to load this chat. Please try again.',

@@ -1,6 +1,8 @@
 import clsx from 'clsx'
+import { useCallback } from 'react'
 import { useIsMobile } from '../../app/viewport.js'
 import { useTranslate } from '../../i18n/index.js'
+import { loadOlderMessages, useChatStore } from '../../services/chat/store.js'
 import type { Session } from '../../services/chat/types.js'
 import { ChatInput } from '../chatInput/ChatInput.js'
 import { MessageList } from '../messages/MessageList.js'
@@ -20,6 +22,10 @@ export const SessionView = ({
 }) => {
   const t = useTranslate()
   const isMobile = useIsMobile()
+  const history = useChatStore((state) => state.history[session.id])
+  const loadOlder = useCallback(() => {
+    void loadOlderMessages(session.id)
+  }, [session.id])
   const title = session.title || t('untitledChat')
   return (
     <div className={styles.view}>
@@ -35,6 +41,8 @@ export const SessionView = ({
       <MessageList
         session={session}
         streaming={streaming}
+        history={history}
+        onLoadOlder={loadOlder}
         footer={
           <div className={styles.inputContainer} data-chat-input-area>
             <ScrollToBottomButton />

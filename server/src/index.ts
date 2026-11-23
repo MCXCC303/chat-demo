@@ -359,8 +359,18 @@ const main = async () => {
     await openBrowser(entryUrl)
   }
 
+  let closing = false
   const shutdown = () => {
+    if (closing) {
+      process.exit(0)
+    }
+    closing = true
     server.close(() => process.exit(0))
+    server.closeIdleConnections()
+    setTimeout(() => {
+      server.closeAllConnections()
+      process.exit(0)
+    }, 500)
   }
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)

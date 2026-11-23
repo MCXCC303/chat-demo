@@ -379,12 +379,13 @@
     height: var(--dsw-specific-toggle-height);
     padding: 0 8px;
     border-radius: var(--dsw-specific-toggle-radius);
-    border: 1px solid rgba(136, 163, 242, 0.25);
+    border: 1px solid var(--dsw-specific-toggle-border);
     background-color: transparent;
-    color: var(--dsw-alias-label-tertiary);
+    color: var(--dsw-specific-toggle-label-idle);
   }
 
   .toggle.selected {
+    border-color: var(--dsw-specific-toggle-active-border);
     background-color: var(--dsw-specific-toggle-fill);
     color: var(--dsw-specific-toggle-label);
   }

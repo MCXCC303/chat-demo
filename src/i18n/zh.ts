@@ -114,6 +114,7 @@ export const zh = {
   settingDialogAsideModelsOptionLabel: '模型',
   settingsModelsTitle: '模型供应商',
   settingsModelsProviderGroup: '供应商',
+  messageModelLabel: '由 {model} 生成',
   settingsModelsIntro: '管理对话使用的供应商、端点与凭据。',
   settingsModelsEdit: '编辑',
   settingsModelsClose: '收起',

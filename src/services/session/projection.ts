@@ -200,13 +200,19 @@ export const applyFrame = (
       if (!projection.session) {
         return { ...projection, seq }
       }
+      const parentLoaded = projection.session.messages.some((message) => message.id === parentId)
+      const selectedLoaded =
+        selectedChildId !== null &&
+        projection.session.messages.some((message) => message.id === selectedChildId)
       return {
         ...projection,
         seq,
         session: {
           ...projection.session,
           rootMessageId:
-            parentId === null ? (selectedChildId ?? null) : projection.session.rootMessageId,
+            parentId === null || (!parentLoaded && selectedLoaded)
+              ? (selectedChildId ?? null)
+              : projection.session.rootMessageId,
           messages: projection.session.messages.map((message) =>
             message.id === parentId
               ? { ...message, selectedChildId: selectedChildId ?? undefined }

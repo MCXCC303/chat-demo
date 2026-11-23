@@ -558,6 +558,7 @@ export class SessionCommands {
       latestReminder: options.latestReminder,
     }
     const accepted: number[] = []
+    accepted.push(await this.writeMeta(options.sessionId, options.state))
     accepted.push(await this.upsertMessage(options.sessionId, assistant))
     if (options.selectParentId !== undefined) {
       accepted.push(

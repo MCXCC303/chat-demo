@@ -9,6 +9,9 @@ import { isInHorizontalScrollContainer } from '../../utils/scroll.js'
 import { clearSiderOffset, paintSiderOffset } from './mobileSiderDrag.js'
 
 const ENGAGE_THRESHOLD = 10
+const COMMIT_RATIO = 0.2
+const FLICK_PROJECTION_MS = 120
+const FLICK_IDLE_MS = 100
 const FALLBACK_WIDTH = 261
 
 const readDrawerWidth = () => {
@@ -34,6 +37,9 @@ export const useMobileDrawerDrag = (enabled: boolean) => {
     let dragging = false
     let contentScrollable = false
     let lastOffset = 0
+    let lastX = 0
+    let lastTime = 0
+    let velocityX = 0
 
     const onTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0]
@@ -44,6 +50,9 @@ export const useMobileDrawerDrag = (enabled: boolean) => {
       width = readDrawerWidth()
       startX = touch.clientX
       startY = touch.clientY
+      lastX = touch.clientX
+      lastTime = event.timeStamp
+      velocityX = 0
       base = useMobileSider.getState().open ? width : 0
       dragging = false
     }
@@ -55,6 +64,12 @@ export const useMobileDrawerDrag = (enabled: boolean) => {
       }
       if (contentScrollable) {
         return
+      }
+      const elapsed = event.timeStamp - lastTime
+      if (elapsed > 0) {
+        velocityX = velocityX * 0.6 + ((touch.clientX - lastX) / elapsed) * 0.4
+        lastX = touch.clientX
+        lastTime = event.timeStamp
       }
       const deltaX = touch.clientX - startX
       const deltaY = touch.clientY - startY
@@ -72,14 +87,18 @@ export const useMobileDrawerDrag = (enabled: boolean) => {
       paintSiderOffset(lastOffset, lastOffset / width, width)
     }
 
-    const onTouchEnd = () => {
+    const onTouchEnd = (event: TouchEvent) => {
       if (!dragging) {
         return
       }
       dragging = false
       clearSiderOffset()
       setMobileSiderOffset(lastOffset, lastOffset / width, false)
-      if (lastOffset > width * 0.4) {
+      const projected =
+        lastOffset +
+        (event.timeStamp - lastTime > FLICK_IDLE_MS ? 0 : velocityX) * FLICK_PROJECTION_MS
+      const openThreshold = base === 0 ? width * COMMIT_RATIO : width * (1 - COMMIT_RATIO)
+      if (projected > openThreshold) {
         openMobileSider()
       } else {
         closeMobileSider()

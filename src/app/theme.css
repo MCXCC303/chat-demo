@@ -337,6 +337,11 @@ body[data-ds-dark-theme] {
     --dsw-font-markdown-small-mobile: 14px/22px var(--dsw-font-family);
     --dsw-specific-toggle-height: 29px;
     --dsw-specific-toggle-radius: 14.5px;
+    --dsw-specific-toggle-border: var(--dsw-alias-border-l2);
+    --dsw-specific-toggle-label-idle: var(--dsw-alias-label-primary);
+    --dsw-specific-toggle-fill: var(--dsw-static-blue-50);
+    --dsw-specific-toggle-label: var(--dsw-alias-brand-text);
+    --dsw-specific-toggle-active-border: var(--dsw-static-blue-200);
   }
 
   body[data-ds-dark-theme] {
@@ -355,6 +360,9 @@ body[data-ds-dark-theme] {
     --dsw-specific-message-caveat: #d4d4d4;
     --dsw-specific-toggle-fill: #283142;
     --dsw-specific-toggle-label: #88a3f2;
+    --dsw-specific-toggle-border: rgba(136, 163, 242, 0.25);
+    --dsw-specific-toggle-label-idle: var(--dsw-alias-label-tertiary);
+    --dsw-specific-toggle-active-border: var(--dsw-alias-button-ghost-active-border);
   }
 }
 

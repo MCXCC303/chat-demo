@@ -1,4 +1,4 @@
-import type { ChatModel, ContentBlockDelta, OutputBlockStart } from '../api/types.js'
+import type { ContentBlockDelta, OutputBlockStart } from '../api/types.js'
 import type { FileAttachment, Message, Session, SessionSummary } from '../chat/types.js'
 
 export type SessionEventType =

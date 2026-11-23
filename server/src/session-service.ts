@@ -1,5 +1,6 @@
-import type { Message, SessionSummary } from '../../src/services/chat/types.js'
-import type { ControlEventType } from '../../src/services/session/types.js'
+import { getVisibleMessages } from '../../src/services/chat/branches.ts'
+import type { Message, Session, SessionSummary } from '../../src/services/chat/types.js'
+import type { ControlEventType, SessionHistoryPage } from '../../src/services/session/types.js'
 import { readServerSettings } from './agent.ts'
 import { SessionCommands, toImportEvents, type LegacySessionEnvelope } from './commands.ts'
 import type { CredentialStore } from './credentials.ts'
@@ -24,6 +25,9 @@ export type ControlFrame = {
 
 const CONTROL_POLL_INTERVAL = 2000
 const HEAD_PAGE_SIZE = 50
+const HISTORY_PAGE_MAX = 200
+const HISTORY_PAGE_MIN = 10
+const HISTORY_MIN_TURNS = 2
 
 const buildSession = (
   sessionId: string,
@@ -90,6 +94,67 @@ const buildSession = (
   }
 }
 
+const sessionRoot = (session: Session): string | null =>
+  session.rootMessageId ??
+  session.messages.find((message) => message.parentId === undefined || message.parentId === null)
+    ?.id ??
+  session.messages[0]?.id ??
+  null
+
+const sliceHistoryPage = (
+  session: Session,
+  before: string | null,
+  limit: number
+): Omit<SessionHistoryPage, 'seq'> => {
+  const visible = getVisibleMessages({ ...session, rootMessageId: sessionRoot(session) })
+  let end = visible.length
+  if (before !== null) {
+    const index = visible.findIndex((message) => message.id === before)
+    if (index === -1) {
+      return {
+        session: { ...session, messages: [], rootMessageId: null },
+        hasMore: false,
+        before: null,
+      }
+    }
+    end = index
+  }
+  if (end === 0) {
+    return {
+      session: { ...session, messages: [], rootMessageId: null },
+      hasMore: false,
+      before: null,
+    }
+  }
+
+  let start = Math.max(0, end - limit)
+  if (start > 0 && visible[start]?.role === 'assistant') {
+    start -= 1
+  }
+  let turns = visible.slice(start, end).filter((message) => message.role === 'user').length
+  while (start > 0 && turns < HISTORY_MIN_TURNS && end - start < limit * 2) {
+    start -= 1
+    if (visible[start]?.role === 'user') {
+      turns += 1
+    }
+  }
+
+  const page = visible.slice(start, end)
+  const ids = new Set(page.map((message) => message.id))
+  const parents = new Set(page.map((message) => message.parentId ?? null))
+  for (const message of session.messages) {
+    if (parents.has(message.parentId ?? null)) {
+      ids.add(message.id)
+    }
+  }
+  const messages = session.messages.filter((message) => ids.has(message.id))
+  return {
+    session: { ...session, messages, rootMessageId: page[0]?.id ?? null },
+    hasMore: start > 0,
+    before: page[0]?.id ?? null,
+  }
+}
+
 export const createSessionService = (options: SessionServiceOptions): SessionService => {
   const commands = new SessionCommands({
     log: options.log,
@@ -144,6 +209,18 @@ export const createSessionService = (options: SessionServiceOptions): SessionSer
     async readSession(sessionId) {
       const events = await options.log.read(sessionId)
       return buildSession(sessionId, events)
+    },
+    async readHistoryPage(sessionId, before, limit) {
+      const events = await options.log.read(sessionId)
+      const envelope = buildSession(sessionId, events)
+      if (!envelope) {
+        return undefined
+      }
+      const size = Math.min(HISTORY_PAGE_MAX, Math.max(HISTORY_PAGE_MIN, limit))
+      return {
+        ...sliceHistoryPage(envelope.session, before, size),
+        seq: events.at(-1)?.seq ?? 0,
+      }
     },
     async importSessions(items) {
       const imported = new Set(items.map((item) => item.id))

@@ -113,6 +113,12 @@ export const createApi =
       return
     }
 
+    if (path.startsWith('/api/sessions/') && path.endsWith('/history') && method === 'GET') {
+      const id = decodeURIComponent(path.slice('/api/sessions/'.length, -'/history'.length))
+      await createSessionRoutes(options.sessions).history(req, res, id)
+      return
+    }
+
     if (path.startsWith('/api/sessions/') && path.endsWith('/stream') && method === 'GET') {
       const id = decodeURIComponent(path.slice('/api/sessions/'.length, -'/stream'.length))
       const url = new URL(req.url ?? '/', 'http://localhost')

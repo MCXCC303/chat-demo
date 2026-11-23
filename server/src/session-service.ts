@@ -3,13 +3,15 @@ import type { ControlEventType } from '../../src/services/session/types.js'
 import { readServerSettings } from './agent.ts'
 import { SessionCommands, toImportEvents, type LegacySessionEnvelope } from './commands.ts'
 import type { CredentialStore } from './credentials.ts'
+import type { ActiveResolver, ProviderResolver } from './providers.ts'
 import type { SessionEvent } from '../../src/services/session/types.js'
 import type { SessionLog, SessionService } from './session-events.ts'
 import type { Storage } from './storage.ts'
 
 export type SessionServiceOptions = {
   log: SessionLog
-  upstream: string
+  resolveProvider: ProviderResolver
+  readActive: ActiveResolver
   credentials: CredentialStore
   storage: Storage
 }
@@ -91,7 +93,8 @@ const buildSession = (
 export const createSessionService = (options: SessionServiceOptions): SessionService => {
   const commands = new SessionCommands({
     log: options.log,
-    upstream: options.upstream,
+    resolveProvider: options.resolveProvider,
+    readActive: options.readActive,
     credentials: options.credentials,
     settings: {
       read: async () => readServerSettings(await options.storage.readSettings()),

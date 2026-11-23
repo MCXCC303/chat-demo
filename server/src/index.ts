@@ -8,6 +8,12 @@ import { CredentialStore } from './credentials.ts'
 import { homeDisplay, resolveHome } from './home.ts'
 import { buildFrontend, bundleExists } from './build.ts'
 import { createProxy } from './proxy.ts'
+import {
+  DEFAULT_BASE_URL,
+  DEFAULT_PROVIDER_ID,
+  ProviderStore,
+  type ProviderProfile,
+} from './providers.ts'
 import { createStatic } from './static.ts'
 import {
   cookieName,
@@ -28,7 +34,6 @@ const VERSION = '0.2.0'
 const LABEL = 'deepseek-web'
 const DEFAULT_PORT = 8090
 const DEFAULT_HOST = '127.0.0.1'
-const DEFAULT_UPSTREAM = 'https://api.deepseek.com'
 
 type BuildMode = 'auto' | 'always' | 'never'
 
@@ -36,7 +41,7 @@ type Options = {
   home?: string
   port: number
   host: string
-  upstream: string
+  defaultBaseURL: string
   staticRoot: string
   trustHosts: string[]
   auth: boolean
@@ -56,7 +61,6 @@ const HELP = [
   '  --home <path>       data home; defaults to $CHAT_DEMO_HOME, then ~/.chat-demo',
   '  --port <port>       listen port; pass 0 to let the OS pick a free one',
   '  --host <host>       bind address; defaults to 127.0.0.1',
-  '  --upstream <url>    upstream API origin; defaults to https://api.deepseek.com',
   '  --static <dir>      frontend bundle directory; defaults to dist-server',
   '  --trust-host <host> extra authority the browser trust fence accepts (repeatable)',
   '  --no-auth           serve without the browser entry key; the trust fence alone guards the port',
@@ -79,7 +83,7 @@ const parseArgs = (argv: string[]): Options => {
   const options: Options = {
     port: DEFAULT_PORT,
     host: DEFAULT_HOST,
-    upstream: DEFAULT_UPSTREAM,
+    defaultBaseURL: DEFAULT_BASE_URL,
     staticRoot: resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'dist-server'),
     trustHosts: [],
     auth: true,
@@ -107,8 +111,6 @@ const parseArgs = (argv: string[]): Options => {
       options.port = Number(port)
     } else if (arg === '--host') {
       options.host = value('--host')
-    } else if (arg === '--upstream') {
-      options.upstream = value('--upstream')
     } else if (arg === '--static') {
       options.staticRoot = resolve(value('--static'))
     } else if (arg === '--trust-host') {
@@ -143,7 +145,7 @@ const parseArgs = (argv: string[]): Options => {
     options.port = Number(port)
   }
   if (process.env.DEEPSEEK_API_ORIGIN) {
-    options.upstream = process.env.DEEPSEEK_API_ORIGIN
+    options.defaultBaseURL = process.env.DEEPSEEK_API_ORIGIN
   }
   return options
 }
@@ -204,9 +206,18 @@ const main = async () => {
   const storage = new Storage(home)
   await storage.recover()
   const credentials = new CredentialStore(home)
+  const providers = new ProviderStore(home, { defaultBaseURL: options.defaultBaseURL })
+  const resolveProvider = async (id: string = DEFAULT_PROVIDER_ID): Promise<ProviderProfile> => {
+    const profile = await providers.read(id)
+    if (!profile) {
+      throw new Error(`unknown provider: ${id}`)
+    }
+    return profile
+  }
   const sessions = createSessionService({
     log: new SessionLogStore({ home }),
-    upstream: options.upstream,
+    resolveProvider,
+    readActive: async () => await providers.readActive(),
     credentials,
     storage,
   })
@@ -214,11 +225,11 @@ const main = async () => {
     storage,
     credentials,
     sessions,
+    providers,
     home,
     version: VERSION,
-    upstream: options.upstream,
   })
-  const proxy = createProxy({ upstream: options.upstream, credentials })
+  const proxy = createProxy({ resolveProvider, credentials })
   const signingSecret = options.auth ? await loadSigningSecret(credentials) : null
   const launchToken = options.auth ? createLaunchToken() : ''
   const cookieMaxAgeMilliseconds = options.cookieDays * 24 * 60 * 60 * 1000

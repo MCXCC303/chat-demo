@@ -140,13 +140,43 @@ const sliceHistoryPage = (
   }
 
   const page = visible.slice(start, end)
-  const ids = new Set(page.map((message) => message.id))
+  const pageIds = new Set(page.map((message) => message.id))
+  const ids = new Set(pageIds)
   const parents = new Set(page.map((message) => message.parentId ?? null))
   for (const message of session.messages) {
     if (parents.has(message.parentId ?? null)) {
       ids.add(message.id)
     }
   }
+
+  const children = new Map<string, Message[]>()
+  for (const message of session.messages) {
+    if (!message.parentId) {
+      continue
+    }
+    const group = children.get(message.parentId)
+    if (group) {
+      group.push(message)
+    } else {
+      children.set(message.parentId, [message])
+    }
+  }
+  let budget = limit
+  const queue = [...ids].filter((id) => !pageIds.has(id))
+  for (let index = 0; index < queue.length && budget > 0; index += 1) {
+    for (const child of children.get(queue[index]) ?? []) {
+      if (ids.has(child.id)) {
+        continue
+      }
+      ids.add(child.id)
+      queue.push(child.id)
+      budget -= 1
+      if (budget <= 0) {
+        break
+      }
+    }
+  }
+
   const messages = session.messages.filter((message) => ids.has(message.id))
   return {
     session: { ...session, messages, rootMessageId: page[0]?.id ?? null },

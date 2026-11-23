@@ -336,50 +336,55 @@ export const MessageList = ({
       >
         <div className={styles.listView}>
           <div ref={isMobile ? undefined : scrollRef} className={styles.container}>
-            <div ref={isMobile ? scrollRef : undefined} className={styles.scroll}>
-              <div ref={contentRef} className={styles.column}>
-                {history?.hasMore || history?.loading || history?.error ? (
-                  <div className={styles.historyEdge}>
-                    {history.loading ? (
-                      <Spinner />
+            <div className={styles.scrollRegion}>
+              <div ref={isMobile ? scrollRef : undefined} className={styles.scroll}>
+                <div ref={contentRef} className={styles.column}>
+                  {history?.hasMore || history?.loading || history?.error ? (
+                    <div className={styles.historyEdge}>
+                      {history.loading ? (
+                        <Spinner />
+                      ) : (
+                        <button type="button" className={styles.historyMore} onClick={loadEarlier}>
+                          {history.error ? t('sessionLoadMoreOnError') : t('loadEarlierMessages')}
+                        </button>
+                      )}
+                    </div>
+                  ) : null}
+                  {messages.map((message, index) =>
+                    message.role === 'user' ? (
+                      <UserMessage
+                        key={message.id}
+                        sessionId={session.id}
+                        message={message}
+                        retryUploadId={uploadRetryId}
+                        isFirst={index === 0}
+                        isLast={index === lastIndex || index === lastIndex - 1}
+                        busy={streaming}
+                        versions={versions.get(message.id) ?? EMPTY_VERSIONS}
+                        onSelectVersion={selectVersion}
+                      />
                     ) : (
-                      <button type="button" className={styles.historyMore} onClick={loadEarlier}>
-                        {history.error ? t('sessionLoadMoreOnError') : t('loadEarlierMessages')}
-                      </button>
-                    )}
-                  </div>
+                      <AssistantMessage
+                        key={message.id}
+                        sessionId={session.id}
+                        message={message}
+                        isLast={index === lastIndex}
+                        streaming={streaming && index === lastIndex}
+                        busy={streaming}
+                        versions={versions.get(message.id) ?? EMPTY_VERSIONS}
+                        onSelectVersion={selectVersion}
+                      />
+                    )
+                  )}
+                </div>
+                {isMobile ? (
+                  <ScrollBar containerRef={scrollRef} size={3} inset={4} indicator />
                 ) : null}
-                {messages.map((message, index) =>
-                  message.role === 'user' ? (
-                    <UserMessage
-                      key={message.id}
-                      sessionId={session.id}
-                      message={message}
-                      retryUploadId={uploadRetryId}
-                      isFirst={index === 0}
-                      isLast={index === lastIndex || index === lastIndex - 1}
-                      busy={streaming}
-                      versions={versions.get(message.id) ?? EMPTY_VERSIONS}
-                      onSelectVersion={selectVersion}
-                    />
-                  ) : (
-                    <AssistantMessage
-                      key={message.id}
-                      sessionId={session.id}
-                      message={message}
-                      isLast={index === lastIndex}
-                      streaming={streaming && index === lastIndex}
-                      busy={streaming}
-                      versions={versions.get(message.id) ?? EMPTY_VERSIONS}
-                      onSelectVersion={selectVersion}
-                    />
-                  )
-                )}
               </div>
             </div>
             {footer}
           </div>
-          <ScrollBar containerRef={scrollRef} size={6} inset={4} />
+          {isMobile ? null : <ScrollBar containerRef={scrollRef} size={6} inset={4} />}
           <ScrollNav items={navItems} activeId={activeNavId} onSelect={scrollToQuestion} />
           {isMobile ? null : <WidthHandles containerRef={scrollRef} columnRef={contentRef} />}
         </div>

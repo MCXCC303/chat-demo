@@ -36,3 +36,23 @@
     background-color: var(--dsw-alias-scrollbar-hover-l1);
   }
 }
+
+.indicator {
+  right: 2px;
+  width: 3px;
+  transition-duration: 0.2s;
+  transition-delay: 0s;
+}
+
+.indicator .thumb {
+  width: 3px;
+  background-color: var(--dsw-alias-label-primary);
+  opacity: 0.2;
+  pointer-events: none;
+
+  &:hover,
+  &:active {
+    width: 3px;
+    background-color: var(--dsw-alias-label-primary);
+  }
+}

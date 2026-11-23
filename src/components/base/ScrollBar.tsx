@@ -7,9 +7,16 @@ type ScrollBarProps = {
   size?: number
   inset?: number
   className?: string
+  indicator?: boolean
 }
 
-export const ScrollBar = ({ containerRef, size = 6, inset = 0, className }: ScrollBarProps) => {
+export const ScrollBar = ({
+  containerRef,
+  size = 6,
+  inset = 0,
+  className,
+  indicator = false,
+}: ScrollBarProps) => {
   const thumbRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -36,7 +43,17 @@ export const ScrollBar = ({ containerRef, size = 6, inset = 0, className }: Scro
       return
     }
     update()
-    el.addEventListener('scroll', update, { passive: true })
+    let hideTimer: ReturnType<typeof setTimeout> | undefined
+    const onScroll = () => {
+      update()
+      if (!indicator) {
+        return
+      }
+      setVisible(true)
+      clearTimeout(hideTimer)
+      hideTimer = setTimeout(() => setVisible(false), 800)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
 
     const resizeObserver = new ResizeObserver(update)
     resizeObserver.observe(el)
@@ -56,23 +73,26 @@ export const ScrollBar = ({ containerRef, size = 6, inset = 0, className }: Scro
 
     const show = () => setVisible(true)
     const hide = () => setVisible(false)
-    el.addEventListener('mouseenter', show)
-    el.addEventListener('mouseleave', hide)
+    if (!indicator) {
+      el.addEventListener('mouseenter', show)
+      el.addEventListener('mouseleave', hide)
+    }
 
     return () => {
-      el.removeEventListener('scroll', update)
+      clearTimeout(hideTimer)
+      el.removeEventListener('scroll', onScroll)
       el.removeEventListener('mouseenter', show)
       el.removeEventListener('mouseleave', hide)
       resizeObserver.disconnect()
       contentObserver.disconnect()
       mutationObserver.disconnect()
     }
-  }, [containerRef, update])
+  }, [containerRef, update, indicator])
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     const el = containerRef.current
     const thumb = thumbRef.current
-    if (!el || !thumb) {
+    if (indicator || !el || !thumb) {
       return
     }
     event.preventDefault()
@@ -93,7 +113,12 @@ export const ScrollBar = ({ containerRef, size = 6, inset = 0, className }: Scro
 
   return (
     <div
-      className={clsx(styles.gutter, visible && styles.visible, className)}
+      className={clsx(
+        styles.gutter,
+        visible && styles.visible,
+        indicator && styles.indicator,
+        className
+      )}
       style={{ paddingTop: inset, paddingBottom: inset }}
       data-scroll-bar
     >
@@ -101,7 +126,7 @@ export const ScrollBar = ({ containerRef, size = 6, inset = 0, className }: Scro
         ref={thumbRef}
         className={styles.thumb}
         style={{ '--scrollbar-size': `${size}px` } as CSSProperties}
-        onPointerDown={onPointerDown}
+        onPointerDown={indicator ? undefined : onPointerDown}
       />
     </div>
   )

@@ -1,4 +1,4 @@
-import type { ChatModel, ContentBlockDelta, OutputBlockStart } from '../api/types.js'
+import type { ContentBlockDelta, OutputBlockStart } from '../api/types.js'
 import type { FileAttachment, Message, SessionSummary } from '../chat/types.js'
 
 export type SessionEventType =
@@ -67,7 +67,6 @@ export type SessionCommand =
       command: 'send'
       content: string
       files: FileAttachment[]
-      model: ChatModel
       thinking: boolean
       search: boolean
     }

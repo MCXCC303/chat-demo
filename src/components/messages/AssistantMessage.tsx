@@ -163,7 +163,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             />
           </div>
           {message.model ? (
-            <span className={styles.modelLabel}>
+            <span className={clsx(styles.modelLabel, isLast && styles.alwaysShow)}>
               {t('messageModelLabel', { model: message.model })}
             </span>
           ) : null}

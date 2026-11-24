@@ -154,20 +154,81 @@ const MarkdownPhrasingContentItem = memo(function MarkdownPhrasingContentItem({
   }
 })
 
+type TokenChunk = {
+  id: number
+  text: string
+  at: number
+}
+
+type LineTokens = {
+  base: string
+  chunks: TokenChunk[]
+}
+
+const TOKEN_FADE_WINDOW_MS = 450
+
 // 按 \n 拆行插 <br>：源文每个换行（含软换行）都渲染为视觉换行
 const TextContent = memo(function TextContent({ children }: { children: string }) {
-  const streaming = useContext(StreamTokenContext)
+  const { streaming, animate, initial } = useContext(StreamTokenContext)
+  const statesRef = useRef<LineTokens[]>([])
+  const mountedRef = useRef(false)
+  const nextIdRef = useRef(0)
+  const lines = children.split(/\r?\n/)
+  const now = performance.now()
+  const nextStates: LineTokens[] = []
   const result: ReactNode[] = []
-  children.split(/\r?\n/).forEach((line, index) => {
-    const content = streaming
-      ? Array.from(line).map((char, offset) => (
-          <span key={offset} className="token">
-            {char}
-          </span>
-        ))
-      : line
-    result.push(<span key={index + 's'}>{content}</span>, <br key={index + 'br'} />)
+  lines.forEach((line, index) => {
+    const firstRender = !mountedRef.current
+    const previous = statesRef.current[index]
+    let state: LineTokens
+    if ((firstRender && !initial) || !streaming || !animate) {
+      state = { base: line, chunks: [] }
+    } else if (!previous) {
+      state = line
+        ? { base: '', chunks: [{ id: nextIdRef.current, text: line, at: now }] }
+        : { base: '', chunks: [] }
+      if (line) {
+        nextIdRef.current += 1
+      }
+    } else {
+      const previousText = previous.base + previous.chunks.map((chunk) => chunk.text).join('')
+      if (!line.startsWith(previousText)) {
+        state = { base: line, chunks: [] }
+      } else {
+        let base = previous.base
+        const chunks: TokenChunk[] = []
+        for (const chunk of previous.chunks) {
+          if (now - chunk.at >= TOKEN_FADE_WINDOW_MS) {
+            base += chunk.text
+          } else {
+            chunks.push(chunk)
+          }
+        }
+        const tail = line.slice(previousText.length)
+        if (tail) {
+          chunks.push({ id: nextIdRef.current, text: tail, at: now })
+          nextIdRef.current += 1
+        }
+        state = { base, chunks }
+      }
+    }
+    nextStates[index] = state
+    result.push(
+      <span key={index + 's'}>
+        {state.base}
+        {state.chunks.flatMap((chunk) =>
+          Array.from(chunk.text).map((char, offset) => (
+            <span key={chunk.id + ':' + offset} className="token">
+              {char}
+            </span>
+          ))
+        )}
+      </span>,
+      <br key={index + 'br'} />
+    )
   })
+  statesRef.current = nextStates
+  mountedRef.current = true
   result.pop()
   return result
 })

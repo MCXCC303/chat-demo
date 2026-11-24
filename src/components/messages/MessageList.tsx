@@ -342,7 +342,7 @@ export const MessageList = ({
                   {history?.hasMore || history?.loading || history?.error ? (
                     <div className={styles.historyEdge}>
                       {history.loading ? (
-                        <Spinner />
+                        <Spinner size={22} />
                       ) : (
                         <button type="button" className={styles.historyMore} onClick={loadEarlier}>
                           {history.error ? t('sessionLoadMoreOnError') : t('loadEarlierMessages')}
